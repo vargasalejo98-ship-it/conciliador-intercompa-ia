@@ -1,0 +1,1568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Conciliador CxC / CxP</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1B1B1D; --ink-soft:#6B6B70;
+    --paper:#F3F3F4; --paper-card:#FFFFFF; --line:#E5E5E7;
+    --navy:#0A0A0B; --navy-2:#1A1A1C;
+    --gold:#C81328; --gold-bg:#FBE7E9; --gold-line:#D91B32;
+    --green:#227A4B; --green-bg:#E5F4EB;
+    --burgundy:#B0122A; --burgundy-bg:#FBE7E9;
+    --steel:#3C5570; --steel-bg:#E6EBF0;
+    --amber:#C97A17; --amber-bg:#FBEEDD;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+  .app{max-width:1240px;margin:0 auto;padding:0 24px 90px;}
+  header.top{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;padding:28px 24px 32px;margin-bottom:-28px;border-bottom:2px solid var(--gold-line);position:relative;overflow:hidden;box-shadow:0 2px 18px rgba(0,0,0,.4);}
+  header.top::before{content:'';position:absolute;top:0;right:0;width:0;height:0;border-style:solid;border-width:0 220px 190px 0;border-color:transparent rgba(216,27,45,.85) transparent transparent;pointer-events:none;}
+  header.top::after{content:'';position:absolute;top:0;right:60px;width:0;height:0;border-style:solid;border-width:0 130px 190px 0;border-color:transparent rgba(0,0,0,.55) transparent transparent;pointer-events:none;}
+  header.top .inner{max-width:1240px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;position:relative;z-index:1;}
+  header.top .titles{max-width:680px;display:flex;align-items:center;gap:14px;}
+  .logo-mark{width:50px;height:50px;flex-shrink:0;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(0,0,0,.35);overflow:hidden;padding:3px;}
+  .logo-mark img{width:100%;height:100%;object-fit:contain;display:block;}
+  .title-text{display:flex;flex-direction:column;gap:5px;}
+  .title-row{display:flex;align-items:center;gap:10px;}
+  .eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#8FA0B8;margin:0;}
+  h1{font-family:'Inter',sans-serif;font-weight:700;font-size:25px;margin:0;letter-spacing:-.01em;line-height:1.15;}
+  .title-text{position:relative;}
+  .title-text::after{content:'';display:block;width:64px;height:3px;background:var(--gold-line);border-radius:2px;margin-top:8px;}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8FA0B8;text-align:right;white-space:nowrap;}
+
+  .info-btn{width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#C9D2DF;font-family:'IBM Plex Mono',monospace;font-size:11.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s,transform .15s;}
+  .info-btn:hover{background:rgba(216,27,45,.3);border-color:var(--gold-line);color:#fff;transform:scale(1.06);}
+  .info-panel{max-width:1240px;margin:0 auto;position:relative;z-index:1;max-height:0;overflow:hidden;transition:max-height .28s ease;}
+  .info-panel.open{max-height:220px;}
+  .info-panel .inner-p{padding-top:14px;color:#B7C1D1;font-size:12.5px;line-height:1.6;border-top:1px solid rgba(255,255,255,.12);margin-top:16px;}
+  .info-panel .inner-p strong{color:#EDE6D3;}
+
+  .company-groups{display:grid;grid-template-columns:1fr 1fr;gap:22px;position:relative;z-index:2;}
+  .company-group{background:#EDEEEF;border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .group-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 12px 4px;display:flex;align-items:center;gap:8px;}
+  .group-label .dot{width:8px;height:8px;border-radius:50%;background:var(--gold-line);flex-shrink:0;}
+  .group-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  @media (max-width:820px){ .company-groups{grid-template-columns:1fr;} }
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:20px;position:relative;z-index:2;}
+  .card{background:var(--paper-card);border:1px solid var(--line);border-radius:12px;padding:22px;padding-top:20px;box-shadow:0 1px 3px rgba(16,26,44,.06);position:relative;transition:box-shadow .18s,border-color .18s,transform .18s;overflow:hidden;}
+  .card.small{padding:16px;padding-top:16px;}
+  .card.small h3{margin:-16px -16px 12px;padding:11px 16px;font-size:12.5px;}
+  .card.small .drop{padding:22px 12px;}
+  .card.small .drop-icon{width:40px;height:40px;margin-bottom:10px;}
+  .card.small .drop-icon svg{width:19px;height:19px;}
+  .card.small .company{font-size:13.5px;min-height:18px;margin-bottom:10px;}
+  .card:hover{box-shadow:0 8px 20px rgba(16,26,44,.09);border-color:#D6DBE2;transform:translateY(-1px);}
+  .card h3{font-family:'Inter',sans-serif;font-weight:800;font-size:15px;letter-spacing:.01em;text-transform:uppercase;color:#fff;margin:-20px -22px 16px;display:flex;align-items:center;gap:10px;background:linear-gradient(100deg,var(--navy) 0%,var(--navy-2) 78%,var(--gold-line) 78%,var(--gold) 100%);padding:14px 22px;position:relative;}
+  .card h3 .step-no{width:24px;height:24px;border-radius:50%;background:var(--gold-line);color:#fff;font-size:12px;font-weight:800;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 0 0 2px rgba(255,255,255,.15);}
+  .card h3 .step-sub{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:none;color:#9AA5B1;font-weight:500;margin-top:2px;}
+  .card .company{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;min-height:22px;margin:0 0 14px;padding-right:26px;letter-spacing:-.005em;}
+  .company.placeholder{color:#9AA5B1;font-weight:400;font-family:'Inter',sans-serif;font-size:14px;}
+  .clear-btn{position:absolute;top:16px;right:18px;width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.08);color:#fff;cursor:pointer;font-size:13px;line-height:1;display:none;align-items:center;justify-content:center;transition:border-color .15s,color .15s,background .15s;z-index:2;}
+  .clear-btn:hover{border-color:var(--gold-line);color:#fff;background:var(--gold-line);}
+  .card.loaded .clear-btn{display:flex;}
+
+  .drop{border:1.75px dashed var(--gold-line);border-radius:10px;padding:34px 16px;text-align:center;cursor:pointer;transition:border-color .18s,background .18s,transform .18s;background:#FFFCFC;}
+  .drop:hover{border-color:var(--burgundy);background:var(--gold-bg);}
+  .drop.drag{border-color:var(--burgundy);background:var(--gold-bg);transform:scale(1.01);}
+  .drop input{display:none;}
+  .drop-icon{width:52px;height:52px;margin:0 auto 14px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;color:var(--gold-line);transition:background .18s,color .18s;}
+  .drop:hover .drop-icon,.drop.drag .drop-icon{background:var(--gold-line);color:#fff;}
+  .drop-icon svg{width:24px;height:24px;}
+  .drop .label{font-size:13.5px;color:var(--ink-soft);line-height:1.5;}
+  .drop .label b{color:var(--ink);font-weight:600;}
+  .drop .hint{font-size:11px;color:#9AA5B1;margin-top:5px;font-family:'IBM Plex Mono',monospace;}
+  .drop .filename{margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--steel);word-break:break-all;}
+  .file-loaded-card{display:flex;align-items:flex-start;gap:12px;background:#FAFBFC;border:1px solid var(--line);border-radius:9px;padding:16px;}
+  .file-loaded-icon{width:38px;height:38px;border-radius:8px;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .file-loaded-icon svg{width:19px;height:19px;}
+  .file-loaded-name{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--ink);word-break:break-all;line-height:1.5;}
+  .badge-type{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.06em;padding:2px 8px;border-radius:3px;margin-top:8px;}
+  .badge-type.cxc{background:var(--steel-bg);color:var(--steel);}
+  .badge-type.cxp{background:var(--gold-bg);color:var(--gold);}
+  .badge-type.warn{background:var(--burgundy-bg);color:var(--burgundy);}
+  .progress{height:3px;background:#E9EDEC;border-radius:2px;margin-top:10px;overflow:hidden;display:none;}
+  .progress.active{display:block;}
+  .progress i{display:block;height:100%;width:30%;background:var(--gold);animation:slide 1s infinite ease-in-out;}
+  @keyframes slide{0%{margin-left:-30%;}100%{margin-left:100%;}}
+
+  .actions{text-align:center;margin:30px 0 8px;position:relative;z-index:2;}
+  button.primary{font-family:'Inter',sans-serif;font-weight:600;font-size:14.5px;background:linear-gradient(155deg,var(--navy-2) 0%,var(--navy) 100%);color:#fff;border:1px solid var(--gold-line);padding:13px 34px;border-radius:7px;cursor:pointer;transition:transform .15s,box-shadow .15s,background .15s;letter-spacing:.01em;box-shadow:0 2px 8px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.06);display:inline-flex;align-items:center;gap:9px;}
+  button.primary svg{width:16px;height:16px;flex-shrink:0;}
+  button.primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 16px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.08);}
+  button.primary:active:not(:disabled){transform:translateY(0);}
+  button.primary:disabled{background:#D3D8DE;color:#8B94A0;border-color:#D3D8DE;box-shadow:none;cursor:not-allowed;}
+  .error-msg{color:var(--burgundy);background:var(--burgundy-bg);border:1px solid #E4C6C6;padding:12px 16px;border-radius:4px;font-size:13px;margin:16px 0;}
+
+  .totals{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;margin:36px 0 16px;background:#000;border:1px solid #000;border-radius:9px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+  .total-card{background:var(--navy);color:#fff;padding:18px 22px;display:flex;align-items:flex-start;gap:12px;}
+  .total-card .ic{width:34px;height:34px;border-radius:8px;background:rgba(216,27,45,.18);color:var(--gold-line);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .total-card .ic svg{width:18px;height:18px;}
+  .total-card .l{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#8FA0B8;margin-bottom:8px;}
+  .total-card .n{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600;}
+  .total-card.net .n{color:var(--gold-line);}
+  .total-card.net.balanced .n{color:#7FBE9D;}
+
+  .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:0 0 8px;}
+  .stat{background:var(--paper-card);padding:18px 20px;border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 3px rgba(16,26,44,.06);}
+  .stat .ic{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+  .stat .ic svg{width:18px;height:18px;}
+  .stat.ok .ic{background:var(--green-bg);color:var(--green);}
+  .stat.warn .ic{background:var(--amber-bg);color:var(--amber);}
+  .stat.bad .ic{background:var(--gold-bg);color:var(--gold);}
+  .stat .n{font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;}
+  .stat .l{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+  .stat .amt{font-family:'IBM Plex Mono',monospace;font-size:12px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);color:var(--ink-soft);}
+  .stat .amt b{color:var(--ink);font-weight:600;}
+  .stat.ok .n{color:var(--green);}
+  .stat.warn .n{color:var(--amber);}
+  .stat.bad .n{color:var(--gold);}
+
+  .conc-selector{display:flex;gap:12px;flex-wrap:wrap;margin:0 0 20px;}
+  .conc-btn{flex:1;min-width:260px;text-align:left;background:var(--paper-card);border:1.5px solid var(--line);border-radius:10px;padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s,background .15s;}
+  .conc-btn .cb-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#9AA5B1;margin-bottom:4px;}
+  .conc-btn .cb-title{font-family:'Inter',sans-serif;font-weight:700;font-size:14.5px;color:var(--ink);}
+  .conc-btn .cb-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin-top:6px;}
+  .conc-btn.active{border-color:var(--gold-line);box-shadow:0 3px 12px rgba(200,19,40,.15);background:linear-gradient(180deg,#fff 0%,var(--gold-bg) 260%);}
+  .conc-btn.active .cb-label{color:var(--gold-line);}
+  .export-row{gap:12px;}
+  .ghost-btn.secondary{background:#fff;color:var(--navy);border-color:var(--line);box-shadow:0 1px 3px rgba(16,26,44,.06);}
+  .ghost-btn.secondary svg{color:var(--steel);}
+
+  .controls-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:28px;flex-wrap:wrap;}
+  .segmented{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(16,26,44,.05);}
+  .segmented button{font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:7px 13px;border:none;background:transparent;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
+  .segmented button:last-child{border-right:none;}
+  .segmented button.active{background:var(--gold-line);color:#fff;}
+  .search-box{font-family:'Inter',sans-serif;font-size:13px;padding:8px 13px;border:1px solid var(--line);border-radius:7px;min-width:220px;background:#fff;box-shadow:0 1px 2px rgba(16,26,44,.05);}
+  .search-box:focus{outline:none;border-color:var(--gold);}
+
+  .tabs{display:flex;gap:2px;margin:22px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.02em;padding:10px 16px;cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent;user-select:none;}
+  .tab.active{color:var(--ink);border-bottom-color:var(--gold-line);font-weight:600;}
+  .tab.active .count{background:var(--gold-bg);color:var(--gold-line);}
+  .tab .count{display:inline-block;margin-left:6px;background:var(--paper);border-radius:3px;padding:1px 7px;font-size:10.5px;}
+
+  .file-legend{display:flex;gap:10px;align-items:center;margin:14px 0 0;flex-wrap:wrap;}
+  .file-chip{display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px 4px 4px;border-radius:20px;background:#fff;border:1px solid var(--line);color:var(--ink-soft);animation:chipIn .25s ease both;}
+  .file-chip.b{animation-delay:.05s;}
+  @keyframes chipIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:translateY(0);}}
+  .file-chip .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .file-chip.a .dot{background:var(--steel);}
+  .file-chip.b .dot{background:var(--gold);}
+  .file-chip b{color:var(--ink);font-weight:600;}
+
+  .copy-btn{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:4px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;font-size:10.5px;margin-left:6px;flex-shrink:0;transition:background .15s,color .15s,border-color .15s;line-height:1;padding:0;}
+  .copy-btn:hover{background:var(--steel-bg);color:var(--steel);border-color:var(--steel);}
+  .copy-btn.copied{background:var(--green-bg);color:var(--green);border-color:var(--green);}
+
+  .actions-cell{white-space:nowrap;}
+  .mini-btn{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:5px 9px;border-radius:5px;border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;margin-right:6px;transition:border-color .15s,background .15s,color .15s;}
+  .mini-btn:last-child{margin-right:0;}
+  .mini-btn:hover{border-color:var(--steel);color:var(--steel);}
+  .mini-btn.selected-mini{background:var(--gold-line);border-color:var(--gold-line);color:#fff;}
+  .mini-btn.primary-mini{background:var(--gold-line);border-color:var(--gold-line);color:#fff;}
+  .mini-btn.primary-mini:hover{background:var(--burgundy);border-color:var(--burgundy);color:#fff;}
+  .mini-btn:disabled{opacity:.45;cursor:not-allowed;}
+  tr.row-selected td{background:var(--gold-bg)!important;}
+
+  .manual-match-bar{display:none;align-items:center;gap:14px;background:var(--navy);color:#fff;border-radius:9px;padding:12px 16px;margin-top:14px;flex-wrap:wrap;box-shadow:0 4px 14px rgba(0,0,0,.25);}
+  .manual-match-bar .mm-side{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#C9D2DF;background:rgba(255,255,255,.06);padding:7px 12px;border-radius:6px;flex:1;min-width:180px;}
+  .manual-match-bar .mm-side b{color:#fff;}
+  .manual-match-bar .mm-x{font-weight:700;color:var(--gold-line);}
+  .manual-match-bar .mm-actions{display:flex;gap:8px;margin-left:auto;}
+  .manual-match-bar .mini-btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff;}
+  .manual-match-bar .mini-btn:hover{border-color:var(--gold-line);}
+  .manual-match-bar .mini-btn.primary-mini{background:var(--gold-line);border-color:var(--gold-line);}
+
+  .justified-box{margin-top:14px;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+  .justified-head{background:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);padding:10px 14px;border-bottom:1px solid var(--line);}
+  .justified-row{display:flex;align-items:center;gap:14px;padding:9px 14px;border-bottom:1px solid var(--line);font-size:12.5px;background:#fff;flex-wrap:wrap;}
+  .justified-row:last-child{border-bottom:none;}
+  .justified-row .just-reason{flex:1;color:var(--ink-soft);min-width:140px;}
+  .justified-row .just-reason i{color:#B7BDC6;}
+
+  .progress.determinate i{animation:none;margin-left:0;transition:width .15s linear;}
+
+  #table-wrap{max-height:560px;overflow-y:auto;overflow-x:auto;border:1px solid var(--line);border-top:none;margin-top:16px;border-radius:0 0 9px 9px;}
+  table.cmp{min-width:1100px;}
+  th.grp{position:static;text-align:center;font-size:11px;letter-spacing:.04em;}
+  th.grp-a{background:var(--navy);}
+  th.grp-b{background:var(--navy-2);}
+  th.grp-diff{background:#2A0A0E;color:var(--gold-line);}
+  th.grp-side{background:var(--navy);}
+  td.cmp-a{border-left:3px solid var(--steel);}
+  td.cmp-b{border-left:3px solid var(--gold);}
+  td.cmp-diff{border-left:3px solid #000;}
+  #table-wrap table{margin-top:0;border:none;}
+  table{width:100%;border-collapse:collapse;background:var(--paper-card);}
+  thead th{position:sticky;top:0;z-index:1;text-align:left;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#9AA5B1;background:var(--navy);padding:11px 14px;border-bottom:1px solid #000;white-space:nowrap;}
+  th.sortable{cursor:pointer;}
+  th.sortable:hover{color:#fff;}
+  th.sortable .arrow{opacity:.4;margin-left:3px;}
+  th.sortable.sorted .arrow{opacity:1;color:var(--gold-line);}
+  th.diff-col{background:#2A0A0E;color:var(--gold-line);}
+  tbody td{padding:11px 14px;font-size:13.5px;border-bottom:1px solid var(--line);vertical-align:top;position:relative;}
+  tbody tr td:first-child{border-left:3px solid var(--gold-line);}
+  tbody tr:hover{background:#FAFBFC;}
+  tbody tr:last-child td{border-bottom:none;}
+  td.mono,th.mono{font-family:'IBM Plex Mono',monospace;}
+  td.num{text-align:right;font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums;}
+  td.num.neg{color:var(--burgundy);}
+  td.diff-cell{text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600;background:#FBF8F0;}
+  td.diff-cell.neg{color:var(--burgundy);}
+  .empty-row td{text-align:center;color:var(--ink-soft);padding:30px;font-size:13.5px;}
+
+  .pill{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 9px;border-radius:3px;white-space:nowrap;}
+  .pill.ok{background:var(--green-bg);color:var(--green);}
+  .pill.warn{background:var(--gold-bg);color:var(--gold);}
+  .pill.bad{background:var(--burgundy-bg);color:var(--burgundy);}
+  .pill.suc-oficial{background:var(--steel-bg);color:var(--steel);}
+  .pill.suc-prueba{background:var(--gold-bg);color:var(--gold);}
+
+  .check{color:var(--green);font-weight:700;margin-left:7px;}
+  .diff-note{font-size:12px;color:var(--burgundy);margin-top:3px;}
+
+  .doc-pair{display:flex;flex-direction:column;gap:4px;}
+  .doc-line{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);line-height:1.3;}
+  .doc-line.b{font-size:12px;color:var(--ink-soft);}
+  .doc-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+  .doc-dot.a{background:var(--steel);}
+  .doc-dot.b{background:var(--gold);}
+  .desc-pair{display:flex;flex-direction:column;gap:4px;}
+  .desc-line{font-size:13.5px;color:var(--ink);line-height:1.3;}
+  .desc-line.b{font-size:12px;color:var(--ink-soft);}
+  .results{display:none;opacity:0;transform:translateY(6px);transition:opacity .3s ease,transform .3s ease;}
+  .results.show{opacity:1;transform:translateY(0);}
+  .stat{transition:transform .15s;}
+  .stat:hover{transform:translateY(-2px);}
+  .export-row{display:flex;justify-content:flex-end;margin-top:16px;}
+  .ghost-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;background:linear-gradient(155deg,var(--navy-2) 0%,var(--navy) 100%);border:1px solid var(--gold-line);padding:11px 20px;border-radius:7px;cursor:pointer;color:#fff;display:inline-flex;align-items:center;gap:8px;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:border-color .15s,box-shadow .15s,transform .15s;}
+  .ghost-btn svg{width:15px;height:15px;flex-shrink:0;color:var(--gold-line);}
+  .ghost-btn:hover{box-shadow:0 6px 16px rgba(216,27,45,.3);transform:translateY(-1px);}
+  footer.note{margin-top:44px;font-size:12.5px;color:var(--ink-soft);line-height:1.6;border-top:1px solid var(--line);padding-top:18px;}
+  .brand-footer{margin-top:48px;padding:20px 0 4px;display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;}
+  .brand-footer::before{content:'';position:absolute;left:0;bottom:0;width:120px;height:60px;background:linear-gradient(115deg,transparent 45%,var(--gold-line) 45%,var(--gold-line) 55%,var(--navy) 55%);opacity:.9;border-bottom-left-radius:8px;}
+  .brand-footer::after{content:'';position:absolute;right:0;bottom:0;width:120px;height:60px;background:linear-gradient(245deg,transparent 45%,var(--gold-line) 45%,var(--gold-line) 55%,var(--navy) 55%);opacity:.9;border-bottom-right-radius:8px;}
+  .brand-footer .fl-mark{width:52px;height:52px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 3px 10px rgba(0,0,0,.25);overflow:hidden;padding:4px;}
+  .brand-footer .fl-mark img{width:100%;height:100%;object-fit:contain;display:block;}
+  .brand-footer .fl-text{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);position:relative;z-index:1;}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="inner">
+    <div class="titles">
+      <div class="logo-mark"><img src="data:image/jpeg;base64,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" alt="El Templo de la Moda"></div>
+      <div class="title-text">
+        <p class="eyebrow">Cuentas por cobrar &middot; Cuentas por pagar</p>
+        <div class="title-row">
+          <h1>Conciliador intercompañía</h1>
+          <button class="info-btn" id="info-toggle" title="Cómo funciona">i</button>
+        </div>
+      </div>
+    </div>
+    <div class="meta" id="header-meta"></div>
+  </div>
+  <div class="info-panel" id="info-panel">
+    <div class="inner-p">
+      Carga los reportes de estado de cuenta (Siesa) de cada empresa. Cada casilla acepta indistintamente un reporte CxC o CxP — la app detecta automáticamente el tipo al leer el archivo, así que no importa en cuál de las dos casillas de cada empresa lo sueltes. Tampoco es necesario cargar los 4 archivos: con al menos un par cruzable (CxC de una empresa + CxP de la otra) ya se puede conciliar. Si tienes los 4, la app arma <strong>dos conciliaciones simultáneas</strong>: la CxC de la Empresa 1 contra la CxP de la Empresa 2, y la CxP de la Empresa 1 contra la CxC de la Empresa 2 — así se valida el cruce intercompañía en ambos sentidos. Si solo tienes un par, se muestra únicamente esa conciliación. El número de documento se compara <strong>ignorando el prefijo de empresa</strong> (ej. 101-FVE-00010756-000 y 102-FVE-00010756-000 son el mismo documento) y sin importar ceros a la izquierda. La sucursal <strong>001 se trata como "Oficial"</strong> en todos los archivos; cualquier otro código se trata como <strong>"Prueba"</strong>. El cruce primero busca pareja dentro de la misma categoría de sucursal y mismo tipo de comprobante; si no la encuentra, busca en cualquier sucursal (diferencia por "sucursal distinta"); si aun así no aparece, busca solo por el número de factura, ignorando la letra de tipo de comprobante y el sufijo final, ya que es común que la misma factura quede registrada con un código de documento distinto en cada empresa (diferencia por "documento distinto"). Sobre cualquiera de estos cruces se revisa el valor <strong>sin margen de tolerancia</strong>: si el valor coincide exactamente, el documento queda como <strong>Conciliado</strong> aunque haya cruzado por sucursal distinta, tipo de documento distinto o mes distinto (esto se muestra como nota informativa, no como diferencia). Si el valor no coincide, sea cual sea el monto de la diferencia, el documento pasa a <strong>"Diferencias"</strong>. La pestaña <strong>"Conciliados"</strong> muestra solo los documentos sin ninguna diferencia de valor; la pestaña <strong>"Diferencias"</strong> muestra los que sí la tienen, con el monto de la diferencia; y la pestaña <strong>"Comparativa"</strong> muestra ambos grupos juntos, lado a lado, con la columna de diferencia y su estado. Puedes alternar entre las dos conciliaciones con el selector de arriba de los resultados, y descargar cada una por separado (o las dos de una vez) como reporte Excel, con el nombre de cada empresa y el tipo de cuenta (CxC/CxP) en el encabezado.
+    </div>
+  </div>
+</header>
+
+<div class="app">
+  <div class="company-groups">
+    <div class="company-group">
+      <p class="group-label"><span class="dot"></span>Empresa 1</p>
+      <div class="group-cards">
+        <div class="card small" id="card-e1cxc">
+          <button class="clear-btn" id="clear-e1cxc" title="Quitar archivo">✕</button>
+          <h3><span class="step-no">1</span><span>Archivo A<span class="step-sub">Empresa 1</span></span></h3>
+          <p class="company placeholder" id="company-e1cxc">Sin cargar</p>
+          <label class="drop" id="drop-e1cxc">
+            <input type="file" id="file-e1cxc" accept=".xls,.xlsx">
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 15V4M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15V17C4 18.6569 5.34315 20 7 20H17C18.6569 20 20 18.6569 20 17V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="label"><b>Arrastra o haz clic</b><br>reporte CxC o CxP</div>
+            <div class="hint">.XLS &middot; .XLSX</div>
+          </label>
+          <div id="loaded-e1cxc"></div>
+          <div class="progress" id="progress-e1cxc"><i></i></div>
+        </div>
+        <div class="card small" id="card-e1cxp">
+          <button class="clear-btn" id="clear-e1cxp" title="Quitar archivo">✕</button>
+          <h3><span class="step-no">2</span><span>Archivo B<span class="step-sub">Empresa 1</span></span></h3>
+          <p class="company placeholder" id="company-e1cxp">Sin cargar</p>
+          <label class="drop" id="drop-e1cxp">
+            <input type="file" id="file-e1cxp" accept=".xls,.xlsx">
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 15V4M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15V17C4 18.6569 5.34315 20 7 20H17C18.6569 20 20 18.6569 20 17V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="label"><b>Arrastra o haz clic</b><br>reporte CxC o CxP</div>
+            <div class="hint">.XLS &middot; .XLSX</div>
+          </label>
+          <div id="loaded-e1cxp"></div>
+          <div class="progress" id="progress-e1cxp"><i></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="company-group">
+      <p class="group-label"><span class="dot"></span>Empresa 2</p>
+      <div class="group-cards">
+        <div class="card small" id="card-e2cxc">
+          <button class="clear-btn" id="clear-e2cxc" title="Quitar archivo">✕</button>
+          <h3><span class="step-no">3</span><span>Archivo A<span class="step-sub">Empresa 2</span></span></h3>
+          <p class="company placeholder" id="company-e2cxc">Sin cargar</p>
+          <label class="drop" id="drop-e2cxc">
+            <input type="file" id="file-e2cxc" accept=".xls,.xlsx">
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 15V4M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15V17C4 18.6569 5.34315 20 7 20H17C18.6569 20 20 18.6569 20 17V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="label"><b>Arrastra o haz clic</b><br>reporte CxC o CxP</div>
+            <div class="hint">.XLS &middot; .XLSX</div>
+          </label>
+          <div id="loaded-e2cxc"></div>
+          <div class="progress" id="progress-e2cxc"><i></i></div>
+        </div>
+        <div class="card small" id="card-e2cxp">
+          <button class="clear-btn" id="clear-e2cxp" title="Quitar archivo">✕</button>
+          <h3><span class="step-no">4</span><span>Archivo B<span class="step-sub">Empresa 2</span></span></h3>
+          <p class="company placeholder" id="company-e2cxp">Sin cargar</p>
+          <label class="drop" id="drop-e2cxp">
+            <input type="file" id="file-e2cxp" accept=".xls,.xlsx">
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 15V4M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15V17C4 18.6569 5.34315 20 7 20H17C18.6569 20 20 18.6569 20 17V15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div class="label"><b>Arrastra o haz clic</b><br>reporte CxC o CxP</div>
+            <div class="hint">.XLS &middot; .XLSX</div>
+          </label>
+          <div id="loaded-e2cxp"></div>
+          <div class="progress" id="progress-e2cxp"><i></i></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="error-box"></div>
+
+  <div class="actions">
+    <button class="primary" id="btn-conciliar" disabled>
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12L9 17L20 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Conciliar cuentas
+    </button>
+  </div>
+
+  <div class="results" id="results">
+    <div class="conc-selector" id="conc-selector">
+      <div class="conc-btn active" data-conc="1">
+        <div class="cb-label">Conciliación 1</div>
+        <div class="cb-title" id="conc1-title">CxC Empresa 1 vs CxP Empresa 2</div>
+        <div class="cb-sub" id="conc1-sub"></div>
+      </div>
+      <div class="conc-btn" data-conc="2">
+        <div class="cb-label">Conciliación 2</div>
+        <div class="cb-title" id="conc2-title">CxP Empresa 1 vs CxC Empresa 2</div>
+        <div class="cb-sub" id="conc2-sub"></div>
+      </div>
+    </div>
+    <div class="totals" id="totals-row"></div>
+
+    <div class="summary">
+      <div class="stat ok">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M8 12.3L10.6 15L16 9.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="n" id="stat-ok">0</div><div class="l">Conciliados sin diferencias</div>
+        <div class="amt" id="amt-ok"></div>
+      </div>
+      <div class="stat warn">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L21.5 20H2.5L12 4Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 10V14.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="17.2" r="1" fill="currentColor"/></svg></div>
+        <div class="n" id="stat-diff">0</div><div class="l">Conciliados con diferencias</div>
+        <div class="amt" id="amt-diff"></div>
+      </div>
+      <div class="stat bad">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 3.5H14L18 7.5V19.5C18 20.3284 17.3284 21 16.5 21H6C5.17157 21 4.5 20.3284 4.5 19.5V5C4.5 4.17157 5.17157 3.5 6 3.5Z" stroke="currentColor" stroke-width="1.6"/><path d="M13.5 3.5V8H18" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div class="n" id="stat-onlycxc">0</div><div class="l">Solo en lado A</div>
+        <div class="amt" id="amt-onlycxc"></div>
+      </div>
+      <div class="stat bad">
+        <div class="ic"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 3.5H14L18 7.5V19.5C18 20.3284 17.3284 21 16.5 21H6C5.17157 21 4.5 20.3284 4.5 19.5V5C4.5 4.17157 5.17157 3.5 6 3.5Z" stroke="currentColor" stroke-width="1.6"/><path d="M13.5 3.5V8H18" stroke="currentColor" stroke-width="1.6"/></svg></div>
+        <div class="n" id="stat-onlycxp">0</div><div class="l">Solo en lado B</div>
+        <div class="amt" id="amt-onlycxp"></div>
+      </div>
+    </div>
+
+    <div class="controls-row">
+      <div class="segmented" id="suc-filter">
+        <button class="active" data-suc="ALL">Todas las sucursales</button>
+        <button data-suc="OFICIAL">Oficial (001)</button>
+        <button data-suc="PRUEBA">Prueba</button>
+      </div>
+      <input class="search-box" id="search-box" type="text" placeholder="Buscar documento o descripción…">
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="ok">Conciliados <span class="count" id="count-ok">0</span></div>
+      <div class="tab" data-tab="diff">Diferencias <span class="count" id="count-diff">0</span></div>
+      <div class="tab" data-tab="onlycxc">Solo lado A <span class="count" id="count-onlycxc">0</span></div>
+      <div class="tab" data-tab="onlycxp">Solo lado B <span class="count" id="count-onlycxp">0</span></div>
+      <div class="tab" data-tab="comparativa">Vista comparativa <span class="count" id="count-comparativa">0</span></div>
+    </div>
+
+    <div class="file-legend" id="file-legend"></div>
+    <div class="manual-match-bar" id="manual-match-bar"></div>
+    <div id="table-wrap"></div>
+
+    <div class="export-row">
+      <button class="ghost-btn secondary" id="btn-export-both">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17V18C4 19.6569 5.34315 21 7 21H17C18.6569 21 20 19.6569 20 18V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Descargar las 2 conciliaciones (2 Excel)
+      </button>
+      <button class="ghost-btn" id="btn-export">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3V15M12 15L8 11M12 15L16 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 17V18C4 19.6569 5.34315 21 7 21H17C18.6569 21 20 19.6569 20 18V17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Descargar conciliación actual (Excel)
+      </button>
+    </div>
+  </div>
+
+  <div class="brand-footer">
+    <div class="fl-mark"><img src="data:image/jpeg;base64,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" alt="El Templo de la Moda"></div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const state = { files: { e1cxc:null, e1cxp:null, e2cxc:null, e2cxp:null }, conc: { 1: null, 2: null }, activeConc: 1, sucFilter: 'ALL', search: '', activeTab: 'ok', sort: {},
+    manual: { 1: { matches: [], discards: [] }, 2: { matches: [], discards: [] } }, manualSelect: { A: null, B: null } };
+
+  function clearManualState(){
+    state.manual = { 1: { matches: [], discards: [] }, 2: { matches: [], discards: [] } };
+    state.manualSelect = { A: null, B: null };
+  }
+
+  function escAttr(s){
+    return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  document.getElementById('header-meta').textContent = 'Generado ' + new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short', year:'numeric'});
+
+  document.getElementById('info-toggle').addEventListener('click', () => {
+    document.getElementById('info-panel').classList.toggle('open');
+  });
+
+  function excelSerialToDate(serial){
+    const utc_days = Math.floor(serial - 25569);
+    return new Date(utc_days * 86400 * 1000);
+  }
+
+  function detectType(aoa){
+    for (let i=0;i<Math.min(5,aoa.length);i++){
+      const row = aoa[i]; if (!row) continue;
+      for (const cell of row){
+        if (typeof cell === 'string'){
+          if (/cuentas\s*cxc/i.test(cell)) return 'CXC';
+          if (/cuentas\s*cxp/i.test(cell)) return 'CXP';
+        }
+      }
+    }
+    return null;
+  }
+
+  function detectCompany(aoa){
+    for (let i=0;i<10;i++){
+      const row = aoa[i]; if (!row) continue;
+      const c = row[0];
+      if (typeof c === 'string' && c.trim().length>3 && !/^\d+$/.test(c.trim())){
+        return c.trim().replace(/^\.+/, '');
+      }
+    }
+    return null;
+  }
+
+  const docPattern = /^\d{2,3}-[A-Za-z0-9]+\s*-\d+(-\d+)?$/;
+
+  // Normaliza el consecutivo para que diferencias de ceros a la izquierda entre
+  // empresas (ej. FVE-00010756-000 vs FVE-10756-000) no impidan el cruce.
+  function normalizeKey(key){
+    return key.split('-').map(seg => seg.replace(/^0+(?=\d)/, '').toUpperCase()).join('-');
+  }
+
+  // Extrae solo el número de factura (el segmento numérico más largo del documento,
+  // sin el código de empresa). Esto permite cruzar documentos aunque el tipo de
+  // comprobante (FEV, FVE, FC, etc.) o el sufijo final (-000, -001) difieran entre
+  // los dos reportes, que es lo más común entre empresas relacionadas: la misma
+  // factura puede quedar registrada con distinta letra de tipo en cada compañía.
+  function extractInvoiceNumber(doc){
+    const segs = doc.split('-').slice(1);
+    let longest = '';
+    segs.forEach(seg => {
+      const digits = seg.replace(/\D/g, '');
+      if (digits.length > longest.length) longest = digits;
+    });
+    if (!longest) return null;
+    const trimmed = longest.replace(/^0+(?=\d)/, '');
+    return trimmed || '0';
+  }
+  const sucursalPattern = /^(?:\d{1,3}|[A-Za-z]{1,3}\d{1,3}|\d{1,3}[A-Za-z]{1,3})$/;
+  const longNumberPattern = /^\d{5,}$/;
+
+  function parseDateCell(rawFecha){
+    if (rawFecha instanceof Date) return rawFecha;
+    if (typeof rawFecha === 'number') return excelSerialToDate(rawFecha);
+    if (typeof rawFecha === 'string' && rawFecha.trim()){
+      const d = new Date(rawFecha);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return null;
+  }
+
+  function sucursalCategoria(code){
+    if (!code) return 'OFICIAL';
+    return code.trim().toUpperCase() === '001' ? 'OFICIAL' : 'PRUEBA';
+  }
+
+  function parseReport(aoa){
+    let headerRowIdx = -1, colMap = {};
+    for (let i=0;i<aoa.length;i++){
+      const row = aoa[i]; if (!row) continue;
+      const idx = row.findIndex(c => typeof c === 'string' && c.trim() === 'Documento');
+      if (idx !== -1){
+        headerRowIdx = i;
+        row.forEach((c, ci) => { if (typeof c === 'string' && c.trim()) colMap[c.trim()] = ci; });
+        break;
+      }
+    }
+    if (headerRowIdx === -1) throw new Error('No se encontró la fila de encabezados ("Documento") en este archivo. Verifica que sea un reporte de estado de cuenta de Siesa.');
+
+    const docCol = colMap['Documento'];
+    const fechaCol = colMap['Fecha'];
+    const saldoCol = colMap['Saldo'];
+    const descCol = (colMap['Notas'] !== undefined) ? colMap['Notas'] : colMap['Vendedor'];
+
+    if (docCol === undefined || fechaCol === undefined || saldoCol === undefined){
+      throw new Error('El archivo no tiene las columnas esperadas (Documento, Fecha, Saldo).');
+    }
+
+    const records = [];
+    let currentSucursal = null;
+
+    for (let i = headerRowIdx+1; i < aoa.length; i++){
+      const row = aoa[i]; if (!row) continue;
+      const rawDoc = row[docCol];
+      const doc = (typeof rawDoc === 'string') ? rawDoc.trim() : '';
+      const fecha = parseDateCell(row[fechaCol]);
+
+      if (doc && docPattern.test(doc) && fecha){
+        let valor = row[saldoCol];
+        if (typeof valor === 'string') valor = parseFloat(valor.replace(/,/g,''));
+        if (typeof valor !== 'number' || isNaN(valor)) valor = 0;
+        const desc = descCol !== undefined ? String(row[descCol] ?? '').trim() : '';
+        const parts = doc.split('-');
+        const key = parts.slice(1).join('-');
+        const keyNorm = normalizeKey(key);
+        const invoiceNum = extractInvoiceNumber(doc);
+        records.push({ doc, key, keyNorm, invoiceNum, fecha, valor, desc, sucursal: currentSucursal, categoria: sucursalCategoria(currentSucursal) });
+        continue;
+      }
+
+      const rawCode = row[0];
+      let code = null;
+      if (typeof rawCode === 'string' && rawCode.trim()) code = rawCode.trim();
+      else if (typeof rawCode === 'number') code = String(rawCode);
+      if (code && !fecha && !/^total$/i.test(code)){
+        if (sucursalPattern.test(code) && !longNumberPattern.test(code)){
+          currentSucursal = code.toUpperCase();
+        }
+      }
+    }
+    if (records.length === 0){
+      throw new Error('No se encontraron filas de detalle (facturas) en el archivo. Revisa que el reporte tenga documentos con formato tipo 101-FVE-00010756-000.');
+    }
+
+    // Duplicados dentro del mismo archivo: mismo consecutivo normalizado y misma
+    // categoría de sucursal repetido más de una vez. No se descartan (pueden ser
+    // legítimos, ej. abonos parciales), solo se reportan como aviso para que el
+    // usuario los revise antes de confiar en el cruce.
+    const dupMap = new Map();
+    records.forEach(r => {
+      const dk = r.categoria + '||' + r.keyNorm;
+      if (!dupMap.has(dk)) dupMap.set(dk, []);
+      dupMap.get(dk).push(r);
+    });
+    const duplicates = [];
+    dupMap.forEach(list => {
+      if (list.length > 1) duplicates.push({ doc: list[0].doc, count: list.length, valor: sum(list, x=>x.valor) });
+    });
+
+    return { records, duplicates };
+  }
+
+  function readFile(file, cb, onProgress){
+    const reader = new FileReader();
+    if (onProgress && file.size > 150*1024){
+      reader.onprogress = function(e){
+        if (e.lengthComputable) onProgress(Math.round((e.loaded/e.total)*100));
+      };
+    }
+    reader.onload = function(e){
+      try{
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, {type:'array', cellDates:true});
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const aoa = XLSX.utils.sheet_to_json(sheet, {header:1, raw:true, defval:null});
+        const type = detectType(aoa);
+        const company = detectCompany(aoa);
+        const { records, duplicates } = parseReport(aoa);
+        cb(null, { type, company, records, duplicates, filename: file.name });
+      } catch(err){ cb(err); }
+    };
+    reader.onerror = function(){ cb(new Error('No se pudo leer el archivo.')); };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function showError(msg){
+    document.getElementById('error-box').innerHTML = msg ? '<div class="error-msg">'+msg+'</div>' : '';
+  }
+
+  function setupSlot(slotKey, dropId, inputId, loadedId, companyId, cardId, clearId, progressId){
+    const drop = document.getElementById(dropId);
+    const input = document.getElementById(inputId);
+    const loadedEl = document.getElementById(loadedId);
+    const companyEl = document.getElementById(companyId);
+    const card = document.getElementById(cardId);
+    const clearBtn = document.getElementById(clearId);
+    const progress = document.getElementById(progressId);
+
+    function reset(){
+      state.files[slotKey] = null;
+      loadedEl.innerHTML = '';
+      drop.style.display = '';
+      companyEl.textContent = 'Sin cargar';
+      companyEl.classList.add('placeholder');
+      card.classList.remove('loaded');
+      input.value = '';
+      progress.classList.remove('determinate');
+      progress.querySelector('i').style.width = '';
+      clearManualState();
+      updateButton();
+    }
+
+    const fileIconSvg = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13.5L9.5 18L19 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    function handleFile(file){
+      if (!file) return;
+      showError('');
+      progress.classList.add('active');
+      progress.classList.remove('determinate');
+      const bar = progress.querySelector('i');
+      bar.style.width = '';
+      loadedEl.innerHTML = '';
+      readFile(file, (err, parsed) => {
+        progress.classList.remove('active');
+        progress.classList.remove('determinate');
+        bar.style.width = '';
+        if (err){
+          reset();
+          showError('Archivo "'+file.name+'": ' + err.message);
+          return;
+        }
+        state.files[slotKey] = parsed;
+        clearManualState();
+        let typeBadge;
+        if (!parsed.type){
+          typeBadge = '<span class="badge-type warn">Tipo no identificado &middot; '+parsed.records.length+' documentos</span>';
+        } else {
+          typeBadge = '<span class="badge-type '+(parsed.type==='CXC'?'cxc':'cxp')+'">'+parsed.type+' &middot; '+parsed.records.length+' documentos</span>';
+        }
+        let dupBadge = '';
+        if (parsed.duplicates && parsed.duplicates.length){
+          const title = parsed.duplicates.slice(0,12).map(d => d.doc+' (x'+d.count+')').join(', ') + (parsed.duplicates.length>12?'…':'');
+          dupBadge = '<div style="margin-top:6px"><span class="badge-type warn" title="'+escAttr(title)+'">⚠ '+parsed.duplicates.length+' documento(s) repetido(s) en este archivo</span></div>';
+        }
+        loadedEl.innerHTML = '<div class="file-loaded-card"><div class="file-loaded-icon">'+fileIconSvg+'</div>'
+          + '<div><div class="file-loaded-name">'+parsed.filename+'</div>'+typeBadge+dupBadge+'</div></div>';
+        drop.style.display = 'none';
+        companyEl.textContent = parsed.company || 'Empresa no identificada';
+        companyEl.classList.remove('placeholder');
+        card.classList.add('loaded');
+        updateButton();
+      }, (pct) => {
+        progress.classList.add('determinate');
+        bar.style.width = pct + '%';
+      });
+    }
+
+    input.addEventListener('change', (e) => handleFile(e.target.files[0]));
+    drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.classList.add('drag'); });
+    drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault(); drop.classList.remove('drag');
+      if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+    });
+    clearBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); reset(); });
+  }
+
+  // Dado los dos archivos (parsed o null) cargados en las dos casillas de una
+  // empresa, determina cuál es el CxC y cuál el CxP según el tipo detectado en
+  // el contenido — sin importar en qué casilla física se soltó cada uno. Si
+  // el tipo no se pudo detectar en un archivo, se asigna al lado que aún esté
+  // libre. Si ambos archivos resultan del mismo tipo, se reporta un conflicto.
+  function resolveCompanyFiles(slotA, slotB){
+    const files = [slotA, slotB].filter(Boolean);
+    let cxc = files.find(f => f.type === 'CXC') || null;
+    let cxp = files.find(f => f.type === 'CXP') || null;
+    const cxcCount = files.filter(f => f.type === 'CXC').length;
+    const cxpCount = files.filter(f => f.type === 'CXP').length;
+    if (cxcCount > 1 || cxpCount > 1){
+      return { cxc:null, cxp:null, conflict:true };
+    }
+    files.filter(f => !f.type).forEach(f => {
+      if (!cxc) cxc = f;
+      else if (!cxp) cxp = f;
+    });
+    return { cxc, cxp, conflict:false };
+  }
+
+  function companyAssignments(){
+    const f = state.files;
+    return {
+      e1: resolveCompanyFiles(f.e1cxc, f.e1cxp),
+      e2: resolveCompanyFiles(f.e2cxc, f.e2cxp)
+    };
+  }
+
+  function updateButton(){
+    const asg = companyAssignments();
+    const errs = [];
+    if (asg.e1.conflict) errs.push('Empresa 1: cargaste dos archivos del mismo tipo (se necesita un CxC y un CxP, o solo uno de los dos).');
+    if (asg.e2.conflict) errs.push('Empresa 2: cargaste dos archivos del mismo tipo (se necesita un CxC y un CxP, o solo uno de los dos).');
+    showError(errs.join('<br>'));
+
+    const canConc1 = !!(asg.e1.cxc && asg.e2.cxp);
+    const canConc2 = !!(asg.e1.cxp && asg.e2.cxc);
+    document.getElementById('btn-conciliar').disabled = !(canConc1 || canConc2);
+  }
+
+  setupSlot('e1cxc','drop-e1cxc','file-e1cxc','loaded-e1cxc','company-e1cxc','card-e1cxc','clear-e1cxc','progress-e1cxc');
+  setupSlot('e1cxp','drop-e1cxp','file-e1cxp','loaded-e1cxp','company-e1cxp','card-e1cxp','clear-e1cxp','progress-e1cxp');
+  setupSlot('e2cxc','drop-e2cxc','file-e2cxc','loaded-e2cxc','company-e2cxc','card-e2cxc','clear-e2cxc','progress-e2cxc');
+  setupSlot('e2cxp','drop-e2cxp','file-e2cxp','loaded-e2cxp','company-e2cxp','card-e2cxp','clear-e2cxp','progress-e2cxp');
+
+  function fmtMoney(n){ return '$ ' + n.toLocaleString('es-CO', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+  function fmtDate(d){ return d.toLocaleDateString('es-CO', {year:'numeric', month:'2-digit', day:'2-digit'}); }
+  function sucBadge(rec){
+    const cls = rec.categoria === 'OFICIAL' ? 'suc-oficial' : 'suc-prueba';
+    const label = rec.categoria === 'OFICIAL' ? 'OFICIAL' : 'PRUEBA';
+    return '<span class="pill '+cls+'" title="Código: '+(rec.sucursal||'—')+'">'+label+'</span>';
+  }
+  function sum(list, getVal){ return list.reduce((acc,x) => acc + getVal(x), 0); }
+
+  function reconcile(recordsA, recordsB){
+    // Mapa estricto: misma categoría de sucursal + mismo consecutivo normalizado.
+    const byKeyStrictB = new Map();
+    // Mapa de respaldo: solo por consecutivo normalizado, sin importar sucursal.
+    // Existe porque la detección de sucursal puede leer distinto entre archivos
+    // (encabezado de sucursal con formato distinto, bloque sin encabezado, etc.)
+    // y un documento con mismo consecutivo y mismo valor no debe perderse por eso.
+    const byKeyLooseB = new Map();
+    // Mapa más permisivo aún: solo por el número de factura (ignorando también
+    // la letra de tipo de comprobante y el sufijo final). Cubre el caso frecuente
+    // de que la misma factura quede con un tipo de documento distinto en cada
+    // empresa (ej. 101-FEV-00045001-000 en un archivo y 205-FC-45001-001 en el otro).
+    const byInvoiceB = new Map();
+
+    recordsB.forEach((r,i) => {
+      const kStrict = r.categoria + '||' + r.keyNorm;
+      if (!byKeyStrictB.has(kStrict)) byKeyStrictB.set(kStrict, []);
+      byKeyStrictB.get(kStrict).push(i);
+
+      if (!byKeyLooseB.has(r.keyNorm)) byKeyLooseB.set(r.keyNorm, []);
+      byKeyLooseB.get(r.keyNorm).push(i);
+
+      if (r.invoiceNum !== null){
+        if (!byInvoiceB.has(r.invoiceNum)) byInvoiceB.set(r.invoiceNum, []);
+        byInvoiceB.get(r.invoiceNum).push(i);
+      }
+    });
+
+    const usedB = new Set();
+    const ok = [], diff = [], onlyA = [];
+
+    function pickCandidate(candList){
+      for (const idx of candList){ if (!usedB.has(idx)) return idx; }
+      return null;
+    }
+
+    recordsA.forEach(a => {
+      const kStrict = a.categoria + '||' + a.keyNorm;
+      let foundIdx = pickCandidate(byKeyStrictB.get(kStrict) || []);
+      let sucMismatch = false;
+      let tipoMismatch = false;
+
+      if (foundIdx === null){
+        foundIdx = pickCandidate(byKeyLooseB.get(a.keyNorm) || []);
+        if (foundIdx !== null) sucMismatch = true;
+      }
+
+      if (foundIdx === null && a.invoiceNum !== null){
+        foundIdx = pickCandidate(byInvoiceB.get(a.invoiceNum) || []);
+        if (foundIdx !== null){
+          tipoMismatch = true;
+          const cand = recordsB[foundIdx];
+          if (cand.categoria !== a.categoria) sucMismatch = true;
+        }
+      }
+
+      if (foundIdx === null){ onlyA.push(a); return; }
+      usedB.add(foundIdx);
+      const b = recordsB[foundIdx];
+      const sameMonth = a.fecha.getFullYear() === b.fecha.getFullYear() && a.fecha.getMonth() === b.fecha.getMonth();
+      const diffVal = Math.abs(a.valor - b.valor);
+      // Notas informativas: cómo se encontró la pareja (sucursal/tipo de documento/mes
+      // distintos). Esto YA NO cuenta como "diferencia" — solo es informativo y el
+      // registro se considera conciliado si el valor coincide.
+      const notes = [];
+      if (sucMismatch) notes.push('sucursal distinta ('+(a.categoria)+' vs '+(b.categoria)+')');
+      if (tipoMismatch) notes.push('documento distinto ('+a.doc+' vs '+b.doc+')');
+      if (!sameMonth) notes.push('mes distinto ('+fmtDate(a.fecha)+' vs '+fmtDate(b.fecha)+')');
+      // Sin margen de tolerancia: cualquier diferencia de valor (incluso de
+      // centavos) manda el documento a "Diferencias". El umbral de 0.005 solo
+      // absorbe ruido de precisión de punto flotante, no un margen real.
+      if (diffVal > 0.005){
+        diff.push({a,b,reasons:['valor distinto (Δ '+fmtMoney(diffVal)+')'],notes});
+      } else {
+        ok.push({a,b,notes});
+      }
+    });
+
+    const onlyB = [];
+    recordsB.forEach((b,idx) => { if (!usedB.has(idx)) onlyB.push(b); });
+    return {ok, diff, onlyA, onlyB};
+  }
+
+  function currentResults(){ return state.conc[state.activeConc]; }
+
+  // Identificador estable de un registro (para poder ubicarlo de nuevo tras
+  // recalcular la conciliación, ej. al cambiar el filtro de sucursal). No usa
+  // el índice del array porque este cambia con el filtro.
+  function recKey(r){
+    return r.doc + '||' + (r.sucursal||'') + '||' + (r.fecha ? r.fecha.getTime() : '') + '||' + r.valor;
+  }
+
+  function findRecordByKey(list, key){
+    return list.find(r => recKey(r) === key) || null;
+  }
+
+  // Aplica sobre el resultado automático de reconcile() los emparejamientos
+  // manuales y los "justificados" (pendientes marcados como que no tendrán
+  // contraparte) que el usuario haya hecho para esta conciliación. Se reaplica
+  // cada vez que se recalcula (ej. al cambiar el filtro de sucursal) porque
+  // reconcile() siempre parte de cero.
+  function applyManualOverrides(concNum, result){
+    const m = state.manual[concNum];
+    if (!m) return result;
+
+    const discardKeysA = new Set(m.discards.filter(d=>d.side==='A').map(d=>d.key));
+    const discardKeysB = new Set(m.discards.filter(d=>d.side==='B').map(d=>d.key));
+    result.discardedA = result.onlyA.filter(r => discardKeysA.has(recKey(r))).map(r => ({ rec:r, reason:(m.discards.find(d=>d.side==='A'&&d.key===recKey(r))||{}).reason||'' }));
+    result.discardedB = result.onlyB.filter(r => discardKeysB.has(recKey(r))).map(r => ({ rec:r, reason:(m.discards.find(d=>d.side==='B'&&d.key===recKey(r))||{}).reason||'' }));
+    result.onlyA = result.onlyA.filter(r => !discardKeysA.has(recKey(r)));
+    result.onlyB = result.onlyB.filter(r => !discardKeysB.has(recKey(r)));
+
+    m.matches.forEach(match => {
+      const idxA = result.onlyA.findIndex(r => recKey(r) === match.keyA);
+      const idxB = result.onlyB.findIndex(r => recKey(r) === match.keyB);
+      if (idxA === -1 || idxB === -1) return; // uno de los dos no está visible con el filtro actual
+      const a = result.onlyA[idxA], b = result.onlyB[idxB];
+      result.onlyA.splice(idxA,1);
+      result.onlyB.splice(idxB,1);
+      const diffVal = Math.abs(a.valor - b.valor);
+      const notes = ['emparejado manualmente'];
+      if (diffVal > 0.005){
+        result.diff.push({a,b,reasons:['valor distinto (Δ '+fmtMoney(diffVal)+')'],notes,manual:true});
+      } else {
+        result.ok.push({a,b,notes,manual:true});
+      }
+    });
+    return result;
+  }
+
+  function filterBySuc(records){
+    if (state.sucFilter === 'ALL') return records;
+    return records.filter(r => r.categoria === state.sucFilter);
+  }
+
+  // Arma las conciliaciones intercompañía disponibles según los archivos cargados:
+  //  - Conciliación 1: CxC Empresa 1  vs  CxP Empresa 2  (si ambos están cargados)
+  //  - Conciliación 2: CxP Empresa 1  vs  CxC Empresa 2  (si ambos están cargados)
+  // Ya no se requieren los 4 archivos: con un solo par cruzable alcanza.
+  function runReconcile(){
+    const asg = companyAssignments();
+    state.conc[1] = null;
+    state.conc[2] = null;
+
+    if (asg.e1.cxc && asg.e2.cxp){
+      const recs1A = filterBySuc(asg.e1.cxc.records);
+      const recs1B = filterBySuc(asg.e2.cxp.records);
+      const result1 = applyManualOverrides(1, reconcile(recs1A, recs1B));
+      const labelA1 = 'CxC · ' + (asg.e1.cxc.company || 'Empresa 1');
+      const labelB1 = 'CxP · ' + (asg.e2.cxp.company || 'Empresa 2');
+      state.conc[1] = {...result1, labelA: labelA1, labelB: labelB1, rawA: recs1A, rawB: recs1B};
+      document.getElementById('conc1-title').textContent = labelA1 + '  vs  ' + labelB1;
+      document.getElementById('conc1-sub').textContent = result1.ok.length + ' conciliados · ' + result1.diff.length + ' con diferencias';
+    }
+
+    if (asg.e1.cxp && asg.e2.cxc){
+      const recs2A = filterBySuc(asg.e1.cxp.records);
+      const recs2B = filterBySuc(asg.e2.cxc.records);
+      const result2 = applyManualOverrides(2, reconcile(recs2A, recs2B));
+      const labelA2 = 'CxP · ' + (asg.e1.cxp.company || 'Empresa 1');
+      const labelB2 = 'CxC · ' + (asg.e2.cxc.company || 'Empresa 2');
+      state.conc[2] = {...result2, labelA: labelA2, labelB: labelB2, rawA: recs2A, rawB: recs2B};
+      document.getElementById('conc2-title').textContent = labelA2 + '  vs  ' + labelB2;
+      document.getElementById('conc2-sub').textContent = result2.ok.length + ' conciliados · ' + result2.diff.length + ' con diferencias';
+    }
+
+    document.querySelector('.conc-btn[data-conc="1"]').style.display = state.conc[1] ? '' : 'none';
+    document.querySelector('.conc-btn[data-conc="2"]').style.display = state.conc[2] ? '' : 'none';
+    document.getElementById('conc-selector').style.display = (state.conc[1] && state.conc[2]) ? '' : 'none';
+    document.getElementById('btn-export-both').style.display = (state.conc[1] && state.conc[2]) ? '' : 'none';
+  }
+
+  document.getElementById('btn-conciliar').addEventListener('click', () => {
+    showError('');
+    runReconcile();
+    if (!state.conc[1] && !state.conc[2]) return;
+    state.activeConc = state.conc[1] ? 1 : 2;
+    document.querySelectorAll('.conc-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.conc,10)===state.activeConc));
+    renderResults(true);
+  });
+
+  document.querySelectorAll('.conc-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.conc-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.activeConc = parseInt(btn.dataset.conc, 10);
+      // Al cambiar de conciliación se conserva la pestaña, la sucursal y la
+      // búsqueda activas (resetTab=false); las selecciones de emparejamiento
+      // manual sí se limpian porque pertenecen a la conciliación anterior.
+      state.manualSelect = { A:null, B:null };
+      renderResults(false);
+    });
+  });
+
+  document.querySelectorAll('#suc-filter button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#suc-filter button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.sucFilter = btn.dataset.suc;
+      if (state.conc[1] || state.conc[2]){ runReconcile(); renderResults(false); }
+    });
+  });
+
+  document.getElementById('search-box').addEventListener('input', (e) => {
+    state.search = e.target.value.trim().toLowerCase();
+    renderTable(state.activeTab);
+  });
+
+  function matchesSearch(text){
+    if (!state.search) return true;
+    return (text||'').toLowerCase().includes(state.search);
+  }
+
+  function pillFor(kind){
+    if (kind==='ok') return '<span class="pill ok">Conciliado</span>';
+    if (kind==='diff') return '<span class="pill warn">Diferencia</span>';
+    return '<span class="pill bad">Pendiente</span>';
+  }
+
+  // ---- Emparejamiento manual y justificación de pendientes ----
+  // El usuario selecciona una fila en "Solo lado A" y otra en "Solo lado B"
+  // (los botones "Emparejar" de cada tabla); la barra flotante muestra la
+  // selección y permite confirmar. "Justificar" saca un pendiente del conteo
+  // sin necesidad de emparejarlo con nada (ej. una nota crédito interna).
+
+  function renderManualBar(){
+    const bar = document.getElementById('manual-match-bar');
+    const r = currentResults();
+    if (!r || (!state.manualSelect.A && !state.manualSelect.B)){ bar.style.display = 'none'; bar.innerHTML=''; return; }
+    const recA = state.manualSelect.A ? findRecordByKey(r.onlyA, state.manualSelect.A) : null;
+    const recB = state.manualSelect.B ? findRecordByKey(r.onlyB, state.manualSelect.B) : null;
+    bar.style.display = 'flex';
+    bar.innerHTML =
+      '<div class="mm-side">'+(recA ? ('<b>'+recA.doc+'</b> · '+fmtMoney(recA.valor)) : 'Selecciona una fila en «Solo lado A»')+'</div>'
+      + '<div class="mm-x">×</div>'
+      + '<div class="mm-side">'+(recB ? ('<b>'+recB.doc+'</b> · '+fmtMoney(recB.valor)) : 'Selecciona una fila en «Solo lado B»')+'</div>'
+      + '<div class="mm-actions">'
+        + '<button class="mini-btn primary-mini" type="button" id="mm-confirm"'+((recA&&recB)?'':' disabled')+'>Confirmar emparejamiento</button>'
+        + '<button class="mini-btn" type="button" id="mm-cancel">Cancelar</button>'
+      + '</div>';
+    const confirmBtn = document.getElementById('mm-confirm');
+    if (confirmBtn) confirmBtn.addEventListener('click', confirmManualMatch);
+    document.getElementById('mm-cancel').addEventListener('click', () => {
+      state.manualSelect = { A:null, B:null };
+      renderTable(state.activeTab);
+    });
+  }
+
+  function confirmManualMatch(){
+    if (!state.manualSelect.A || !state.manualSelect.B) return;
+    const concNum = state.activeConc;
+    state.manual[concNum].matches.push({ keyA: state.manualSelect.A, keyB: state.manualSelect.B });
+    state.manualSelect = { A:null, B:null };
+    runReconcile();
+    renderResults(false);
+  }
+
+  function handleMatchClick(btn){
+    const side = btn.dataset.side;
+    const key = decodeURIComponent(btn.dataset.key);
+    state.manualSelect[side] = (state.manualSelect[side] === key) ? null : key;
+    renderTable(state.activeTab);
+  }
+
+  function handleDiscardClick(btn){
+    const side = btn.dataset.side;
+    const key = decodeURIComponent(btn.dataset.key);
+    const r = currentResults();
+    if (!r) return;
+    const rec = findRecordByKey(side==='A' ? r.onlyA : r.onlyB, key);
+    if (!rec) return;
+    const reason = window.prompt('Motivo (opcional) por el que este documento no tendrá contraparte — ej. "Nota crédito interna, no aplica cruce":', '');
+    if (reason === null) return; // el usuario canceló el prompt
+    const concNum = state.activeConc;
+    state.manual[concNum].discards.push({ side, key, reason: reason.trim() });
+    if (state.manualSelect[side] === key) state.manualSelect[side] = null;
+    runReconcile();
+    renderResults(false);
+  }
+
+  function handleUndoDiscard(btn){
+    const side = btn.dataset.side;
+    const key = decodeURIComponent(btn.dataset.key);
+    const concNum = state.activeConc;
+    const m = state.manual[concNum];
+    m.discards = m.discards.filter(d => !(d.side===side && d.key===key));
+    runReconcile();
+    renderResults(false);
+  }
+
+  function handleCopyClick(btn){
+    const doc = btn.dataset.doc;
+    const restore = btn.innerHTML;
+    const done = () => {
+      btn.innerHTML = '✓';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = restore; btn.classList.remove('copied'); }, 1100);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(doc).then(done).catch(done);
+    } else {
+      done();
+    }
+  }
+
+  document.getElementById('table-wrap').addEventListener('click', (e) => {
+    const copyBtn = e.target.closest('.copy-btn');
+    if (copyBtn){ handleCopyClick(copyBtn); return; }
+    const matchBtn = e.target.closest('.match-btn');
+    if (matchBtn){ handleMatchClick(matchBtn); return; }
+    const discardBtn = e.target.closest('.discard-btn');
+    if (discardBtn){ handleDiscardClick(discardBtn); return; }
+    const undoBtn = e.target.closest('.undo-discard-btn');
+    if (undoBtn){ handleUndoDiscard(undoBtn); return; }
+  });
+
+  // Botón pequeño para copiar el número de documento al portapapeles (útil para
+  // buscar esa factura en Siesa sin transcribirla a mano).
+  function docCopyBtn(doc){
+    return '<button class="copy-btn" type="button" data-doc="'+escAttr(doc)+'" title="Copiar documento">⧉</button>';
+  }
+
+  // Celda de Documento: muestra el documento del Lado A y del Lado B apilados,
+  // cada uno con una viñeta de color que indica de qué archivo viene (mismos
+  // colores que la leyenda de arriba de la tabla).
+  function docPairHtml(a, b){
+    return '<div class="doc-pair">'
+      + '<div class="doc-line a"><span class="doc-dot a"></span>'+a.doc+docCopyBtn(a.doc)+'</div>'
+      + '<div class="doc-line b"><span class="doc-dot b"></span>'+b.doc+docCopyBtn(b.doc)+'</div>'
+      + '</div>';
+  }
+
+  // Celda de Descripción: muestra la descripción del Lado A y del Lado B
+  // apiladas (con guion largo si alguna viene vacía).
+  function descPairHtml(a, b){
+    return '<div class="desc-pair">'
+      + '<div class="desc-line a">'+(a.desc||'—')+'</div>'
+      + '<div class="desc-line b">'+(b.desc||'—')+'</div>'
+      + '</div>';
+  }
+
+  function applySort(list, getFecha, getValor){
+    const s = state.sort[state.activeTab];
+    if (!s) return list;
+    const copy = list.slice();
+    copy.sort((x,y) => {
+      let vx, vy;
+      if (s.col === 'fecha'){ vx = getFecha(x).getTime(); vy = getFecha(y).getTime(); }
+      else { vx = getValor(x); vy = getValor(y); }
+      return s.dir === 'asc' ? vx - vy : vy - vx;
+    });
+    return copy;
+  }
+
+  function sortHeader(col, label){
+    const s = state.sort[state.activeTab];
+    const active = s && s.col === col;
+    const arrow = active ? (s.dir === 'asc' ? '▲' : '▼') : '▲';
+    return '<th class="sortable'+(active?' sorted':'')+'" data-col="'+col+'">'+label+' <span class="arrow">'+arrow+'</span></th>';
+  }
+
+  function attachSortHandlers(){
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.dataset.col;
+        const cur = state.sort[state.activeTab];
+        if (cur && cur.col === col) cur.dir = cur.dir === 'asc' ? 'desc' : 'asc';
+        else state.sort[state.activeTab] = {col, dir:'asc'};
+        renderTable(state.activeTab);
+      });
+    });
+  }
+
+  function renderTable(tab){
+    state.activeTab = tab;
+    const r = currentResults();
+    const wrap = document.getElementById('table-wrap');
+    if (!r){ wrap.innerHTML=''; return; }
+
+    let rows = '';
+    let head = '';
+
+    if (tab === 'ok'){
+      // Los documentos de esta pestaña ya no tienen ninguna diferencia de valor
+      // (se filtran a "Diferencias"), así que no se muestra columna de Diferencia.
+      // Documento y Descripción se muestran apilados (Lado A / Lado B con
+      // viñeta de color); Fecha y Valor se muestran una sola vez porque, al
+      // estar conciliados, coinciden entre ambos lados.
+      let list = r.ok.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc));
+      list = applySort(list, x=>x.a.fecha, x=>x.a.valor);
+      head = '<thead><tr><th>Documento</th>'+sortHeader('fecha','Fecha')+sortHeader('valor','Valor')
+        +'<th>Descripción</th><th>Sucursal</th><th>Estado</th></tr></thead>';
+      if (list.length === 0) rows = '<tr class="empty-row"><td colspan="6">Sin resultados para este filtro.</td></tr>';
+      list.forEach(({a,b,notes}) => {
+        rows += '<tr>'
+          +'<td>'+docPairHtml(a,b)+'</td>'
+          +'<td>'+fmtDate(a.fecha)+'</td>'
+          +'<td class="num">'+fmtMoney(a.valor)+'</td>'
+          +'<td>'+descPairHtml(a,b)+'</td>'
+          +'<td>'+sucBadge(a)+'</td>'
+          +'<td>'+pillFor('ok')+'<span class="check">✓</span>'+(notes&&notes.length? '<div class="diff-note" style="color:#9AA5B1">'+notes.join(', ')+'</div>':'')+'</td>'
+          +'</tr>';
+      });
+    } else if (tab === 'diff'){
+      // Mismo formato compacto que "Conciliados": Documento y Descripción
+      // apilados. Como aquí el valor (y a veces la fecha) sí difieren, se
+      // muestran ambos lados juntos separados por "/" para poder compararlos
+      // de un vistazo. La columna Diferencia trae el monto y el motivo.
+      let list = r.diff.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc));
+      list = applySort(list, x=>x.a.fecha, x=>x.a.valor);
+      head = '<thead><tr><th>Documento</th>'+sortHeader('fecha','Fecha')+sortHeader('valor','Valor')
+        +'<th>Descripción</th><th>Sucursal</th><th class="diff-col">Diferencia</th></tr></thead>';
+      if (list.length === 0) rows = '<tr class="empty-row"><td colspan="6">No se encontraron diferencias entre documentos conciliados.</td></tr>';
+      list.forEach(({a,b,reasons,notes}) => {
+        const dv = a.valor - b.valor;
+        rows += '<tr>'
+          +'<td>'+docPairHtml(a,b)+'</td>'
+          +'<td>'+fmtDate(a.fecha)+' / '+fmtDate(b.fecha)+'</td>'
+          +'<td class="num">'+fmtMoney(a.valor)+' / '+fmtMoney(b.valor)+'</td>'
+          +'<td>'+descPairHtml(a,b)+'</td>'
+          +'<td>'+sucBadge(a)+'</td>'
+          +'<td class="diff-cell'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'<div class="diff-note">'+reasons.join(', ')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div></td>'
+          +'</tr>';
+      });
+    } else if (tab === 'comparativa'){
+      // Vista comparativa: junta conciliados + diferencias en una sola tabla
+      // lado a lado, con columna de Diferencia y estado de cada documento.
+      const combined = r.ok.map(x => ({a:x.a, b:x.b, notes:x.notes, kind:'ok'}))
+        .concat(r.diff.map(x => ({a:x.a, b:x.b, notes:x.notes, reasons:x.reasons, kind:'diff'})));
+      let list = combined.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc));
+      list = applySort(list, x=>x.a.fecha, x=>x.a.valor);
+      head = '<thead>'
+        +'<tr><th class="grp grp-a" colspan="4">Lado A &middot; '+r.labelA+'</th>'
+          +'<th class="grp grp-diff" rowspan="2">Diferencia</th>'
+          +'<th class="grp grp-b" colspan="4">Lado B &middot; '+r.labelB+'</th>'
+          +'<th class="grp grp-side" rowspan="2">Sucursal</th>'
+          +'<th class="grp grp-side" rowspan="2">Estado</th></tr>'
+        +'<tr><th>Documento</th>'+sortHeader('fecha','Fecha')+'<th>Descripción</th>'+sortHeader('valor','Valor')
+          +'<th>Documento</th><th>Fecha</th><th>Descripción</th><th>Valor</th></tr>'
+        +'</thead>';
+      if (list.length === 0) rows = '<tr class="empty-row"><td colspan="11">Sin resultados para este filtro.</td></tr>';
+      list.forEach(({a,b,notes,reasons,kind}) => {
+        const dv = a.valor - b.valor;
+        const estado = kind === 'ok'
+          ? pillFor('ok')+(notes&&notes.length? '<div class="diff-note" style="color:#9AA5B1">'+notes.join(', ')+'</div>':'')
+          : pillFor('diff')+'<div class="diff-note">'+(reasons?reasons.join(', '):'')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>';
+        rows += '<tr>'
+          +'<td class="mono cmp-a">'+a.doc+docCopyBtn(a.doc)+'</td><td>'+fmtDate(a.fecha)+'</td><td>'+(a.desc||'—')+'</td><td class="num">'+fmtMoney(a.valor)+'</td>'
+          +'<td class="diff-cell cmp-diff'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'</td>'
+          +'<td class="mono cmp-b">'+b.doc+docCopyBtn(b.doc)+'</td><td>'+fmtDate(b.fecha)+'</td><td>'+(b.desc||'—')+'</td><td class="num">'+fmtMoney(b.valor)+'</td>'
+          +'<td>'+sucBadge(a)+'</td>'
+          +'<td>'+estado+'</td>'
+          +'</tr>';
+      });
+    } else if (tab === 'onlycxc' || tab === 'onlycxp'){
+      const side = tab === 'onlycxc' ? 'A' : 'B';
+      const list0 = tab === 'onlycxc' ? r.onlyA : r.onlyB;
+      let list = list0.filter(a => matchesSearch(a.doc+' '+a.desc));
+      list = applySort(list, x=>x.fecha, x=>x.valor);
+      head = '<thead><tr><th>Documento</th>'+sortHeader('fecha','Fecha')+sortHeader('valor','Valor')+'<th>Descripción</th><th>Sucursal</th><th>Acciones</th></tr></thead>';
+      if (list.length === 0) rows = '<tr class="empty-row"><td colspan="6">Todos los documentos de este archivo tienen contraparte.</td></tr>';
+      list.forEach(a => {
+        const key = recKey(a);
+        const isSelected = state.manualSelect[side] === key;
+        rows += '<tr class="'+(isSelected?'row-selected':'')+'">'
+          +'<td class="mono">'+a.doc+docCopyBtn(a.doc)+'</td><td>'+fmtDate(a.fecha)+'</td><td class="num">'+fmtMoney(a.valor)+'</td><td>'+(a.desc||'—')+'</td><td>'+sucBadge(a)+'</td>'
+          +'<td class="actions-cell">'
+            +'<button class="mini-btn match-btn'+(isSelected?' selected-mini':'')+'" type="button" data-side="'+side+'" data-key="'+escAttr(encodeURIComponent(key))+'">'+(isSelected?'✓ Seleccionado':'Emparejar')+'</button>'
+            +'<button class="mini-btn discard-btn" type="button" data-side="'+side+'" data-key="'+escAttr(encodeURIComponent(key))+'">Justificar</button>'
+          +'</td>'
+          +'</tr>';
+      });
+    }
+
+    let extraHtml = '';
+    if (tab === 'onlycxc' || tab === 'onlycxp'){
+      const side = tab === 'onlycxc' ? 'A' : 'B';
+      const discardedList = (tab === 'onlycxc' ? r.discardedA : r.discardedB) || [];
+      if (discardedList.length){
+        extraHtml = '<div class="justified-box"><div class="justified-head">Justificados / sin cruce ('+discardedList.length+')</div>'
+          + discardedList.map(d => (
+            '<div class="justified-row">'
+            + '<span class="mono">'+d.rec.doc+'</span>'
+            + '<span class="num" style="font-family:\'IBM Plex Mono\',monospace">'+fmtMoney(d.rec.valor)+'</span>'
+            + '<span class="just-reason">'+(d.reason ? d.reason : '<i>Sin motivo indicado</i>')+'</span>'
+            + '<button class="mini-btn undo-discard-btn" type="button" data-side="'+side+'" data-key="'+escAttr(encodeURIComponent(recKey(d.rec)))+'">Deshacer</button>'
+            + '</div>'
+          )).join('')
+          + '</div>';
+      }
+    }
+
+    const tableClass = (tab === 'comparativa') ? ' class="cmp"' : '';
+    wrap.innerHTML = '<table'+tableClass+'>'+head+'<tbody>'+rows+'</tbody></table>' + extraHtml;
+    attachSortHandlers();
+    renderManualBar();
+  }
+
+  // Ordena por número de factura (numérico) y usa el documento completo como
+  // desempate, para que cada hoja del Excel exportado quede en un orden
+  // consistente y fácil de revisar.
+  function sortForComparison(list){
+    return list.slice().sort((x,y) => {
+      const nx = parseInt(x.invoiceNum,10), ny = parseInt(y.invoiceNum,10);
+      const vx = isNaN(nx) ? Infinity : nx, vy = isNaN(ny) ? Infinity : ny;
+      if (vx !== vy) return vx - vy;
+      return x.doc.localeCompare(y.doc);
+    });
+  }
+
+  function animateCount(el, target){
+    const start = 0, duration = 500, startTime = performance.now();
+    function step(now){
+      const p = Math.min(1, (now-startTime)/duration);
+      el.textContent = Math.round(start + (target-start)*p);
+      if (p < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function renderTotals(r){
+    const totalA = sum(r.rawA, x=>x.valor);
+    const totalB = sum(r.rawB, x=>x.valor);
+    const net = totalA - totalB;
+    const balanced = Math.abs(net) < 1;
+    const icDoc = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 3.5H14L18 7.5V19.5C18 20.3284 17.3284 21 16.5 21H6C5.17157 21 4.5 20.3284 4.5 19.5V5C4.5 4.17157 5.17157 3.5 6 3.5Z" stroke="currentColor" stroke-width="1.5"/><path d="M13.5 3.5V8H18" stroke="currentColor" stroke-width="1.5"/><path d="M8 13H14M8 16.5H14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+    const icShield = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L19 6V11C19 15.4183 16 19 12 21C8 19 5 15.4183 5 11V6L12 3Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 12L11 14L15.5 9.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const icScale = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3V21M12 3L7 5M12 3L17 5M4 8H10M14 8H20M4 8L2.5 12.5C2.5 13.8807 3.79086 15 5.5 15C7.20914 15 8.5 13.8807 8.5 12.5L7 8M20 8L21.5 12.5C21.5 13.8807 20.2091 15 18.5 15C16.7909 15 15.5 13.8807 15.5 12.5L17 8M9 21H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    document.getElementById('totals-row').innerHTML =
+      '<div class="total-card"><div class="ic">'+icDoc+'</div><div><div class="l">Total '+r.labelA+'</div><div class="n">'+fmtMoney(totalA)+'</div></div></div>'
+      + '<div class="total-card"><div class="ic">'+icShield+'</div><div><div class="l">Total '+r.labelB+'</div><div class="n">'+fmtMoney(totalB)+'</div></div></div>'
+      + '<div class="total-card net'+(balanced?' balanced':'')+'"><div class="ic">'+icScale+'</div><div><div class="l">Diferencia neta (A − B)</div><div class="n">'+fmtMoney(net)+'</div></div></div>';
+  }
+
+  function renderResults(resetTab){
+    const r = currentResults();
+    const resultsEl = document.getElementById('results');
+    resultsEl.style.display = 'block';
+    requestAnimationFrame(() => resultsEl.classList.add('show'));
+    renderTotals(r);
+    animateCount(document.getElementById('stat-ok'), r.ok.length);
+    animateCount(document.getElementById('stat-diff'), r.diff.length);
+    animateCount(document.getElementById('stat-onlycxc'), r.onlyA.length);
+    animateCount(document.getElementById('stat-onlycxp'), r.onlyB.length);
+    document.getElementById('count-ok').textContent = r.ok.length;
+    document.getElementById('count-diff').textContent = r.diff.length;
+    document.getElementById('count-onlycxc').textContent = r.onlyA.length;
+    document.getElementById('count-onlycxp').textContent = r.onlyB.length;
+    document.getElementById('count-comparativa').textContent = r.ok.length + r.diff.length;
+
+    document.getElementById('amt-ok').innerHTML = '<b>'+fmtMoney(sum(r.ok, x=>x.a.valor))+'</b> conciliado';
+    document.getElementById('amt-diff').innerHTML = '<b>'+fmtMoney(sum(r.diff, x=>Math.abs(x.a.valor-x.b.valor)))+'</b> en diferencias';
+    document.getElementById('amt-onlycxc').innerHTML = '<b>'+fmtMoney(sum(r.onlyA, x=>x.valor))+'</b> pendiente ('+r.labelA+')';
+    document.getElementById('amt-onlycxp').innerHTML = '<b>'+fmtMoney(sum(r.onlyB, x=>x.valor))+'</b> pendiente ('+r.labelB+')';
+
+    document.getElementById('file-legend').innerHTML =
+      '<span class="file-chip a"><span class="dot"></span>Lado A &middot; <b>'+r.labelA+'</b></span>'
+      + '<span class="file-chip b"><span class="dot"></span>Lado B &middot; <b>'+r.labelB+'</b></span>';
+
+    if (resetTab){
+      state.activeTab = 'ok';
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab==='ok'));
+    }
+    renderTable(state.activeTab);
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderTable(tab.dataset.tab);
+    });
+  });
+
+  function excelDate(d){
+    // SheetJS necesita fechas como número de serie de Excel para que la columna
+    // quede realmente como fecha (no como texto) al abrir el archivo.
+    return d ? new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) : null;
+  }
+
+  // ---- Paleta reutilizada del sitio para que el Excel exportado luzca igual ----
+  const XL = {
+    navy:   'FF0A0A0B',
+    navy2:  'FF1A1A1C',
+    gold:   'FFC81328',
+    goldBg: 'FFFBE7E9',
+    steel:  'FF3C5570',
+    steelBg:'FFE6EBF0',
+    white:  'FFFFFFFF',
+    line:   'FFE5E5E7',
+    burg:   'FFB0122A',
+  };
+  const thinBorder = { style:'thin', color:{argb:XL.line} };
+  const allBorders = { top:thinBorder, left:thinBorder, bottom:thinBorder, right:thinBorder };
+  const MONEY_FMT = '$ #,##0.00;[Red]-$ #,##0.00';
+  const DATE_FMT = 'dd/mm/yyyy';
+
+  function styleTitleCell(cell, bg){
+    cell.font = { name:'Calibri', bold:true, color:{argb:XL.white}, size:12 };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:bg} };
+    cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
+    cell.border = allBorders;
+  }
+  function styleSubHeaderCell(cell, {gold}={}){
+    cell.font = { name:'Calibri', bold:true, size:10.5, color:{argb: gold ? XL.gold : XL.steel} };
+    cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb: gold ? XL.goldBg : XL.steelBg} };
+    cell.alignment = { horizontal:'left', vertical:'middle' };
+    cell.border = allBorders;
+  }
+  function styleDataCell(cell, {num, money, date, align}={}){
+    cell.border = allBorders;
+    cell.font = { name:'Calibri', size:10.5 };
+    if (money) { cell.numFmt = MONEY_FMT; cell.alignment = { horizontal:'right' }; }
+    else if (date) { cell.numFmt = DATE_FMT; cell.alignment = { horizontal:'left' }; }
+    else if (num) { cell.alignment = { horizontal:'right' }; }
+    else if (align) { cell.alignment = { horizontal:align }; }
+  }
+
+  // Bloque comparativo lado a lado: título A (4 col) | Diferencia (1 col, fusionada
+  // en las 3 filas de encabezado) | título B (4 col), con subencabezados
+  // Documento/Fecha/Descripcion/Valor bajo cada lado, tal como en la vista de la app.
+  function writeComparativeSheet(ws, {titleA, titleB, rows, extraHeaders}){
+    ws.mergeCells('A1:D1');
+    ws.getCell('A1').value = titleA;
+    styleTitleCell(ws.getCell('A1'), XL.navy);
+
+    ws.mergeCells('E1:E3');
+    ws.getCell('E1').value = 'Diferencia';
+    styleTitleCell(ws.getCell('E1'), XL.gold);
+
+    ws.mergeCells('F1:I1');
+    ws.getCell('F1').value = titleB;
+    styleTitleCell(ws.getCell('F1'), XL.navy2);
+
+    // Fila 2 en blanco, como separador visual (igual que en la vista comparativa)
+    ['A2','B2','C2','D2','F2','G2','H2','I2'].forEach(ref => {
+      ws.getCell(ref).border = { left:thinBorder, right:thinBorder };
+    });
+
+    const subHeaders = ['Documento','Fecha','Descripcion','Valor'];
+    subHeaders.forEach((h,i) => {
+      const cellA = ws.getCell(3, i+1); // A..D
+      cellA.value = h; styleSubHeaderCell(cellA, {gold:false});
+      const cellB = ws.getCell(3, i+6); // F..I
+      cellB.value = h; styleSubHeaderCell(cellB, {gold:true});
+    });
+
+    let col = 10; // J en adelante para columnas extra (Motivo, Notas, Sucursal)
+    const extraCols = [];
+    (extraHeaders||[]).forEach(h => {
+      ws.mergeCells(1, col, 3, col);
+      const c = ws.getCell(1, col);
+      c.value = h; styleTitleCell(c, XL.steel);
+      extraCols.push(col);
+      col++;
+    });
+
+    let r = 4;
+    rows.forEach(row => {
+      const cA = row.a, cB = row.b;
+      const vals = [cA.doc, cA.fecha, cA.desc||'', cA.valor, row.diff, cB.doc, cB.fecha, cB.desc||'', cB.valor];
+      vals.forEach((v,i) => {
+        const cell = ws.getCell(r, i+1);
+        cell.value = v;
+        if (i===1 || i===6) styleDataCell(cell, {date:true});
+        else if (i===3 || i===8) styleDataCell(cell, {money:true});
+        else if (i===4) { styleDataCell(cell, {money:true}); if (Math.abs(v) >= 1) cell.font = {name:'Calibri', size:10.5, bold:true, color:{argb:XL.burg}}; }
+        else styleDataCell(cell);
+      });
+      (row.extra||[]).forEach((v,i) => {
+        const cell = ws.getCell(r, extraCols[i]);
+        cell.value = v || '';
+        styleDataCell(cell);
+      });
+      r++;
+    });
+
+    ws.getColumn(1).width = 24; ws.getColumn(2).width = 12; ws.getColumn(3).width = 30; ws.getColumn(4).width = 15;
+    ws.getColumn(5).width = 15;
+    ws.getColumn(6).width = 24; ws.getColumn(7).width = 12; ws.getColumn(8).width = 30; ws.getColumn(9).width = 15;
+    extraCols.forEach(c => ws.getColumn(c).width = 26);
+    ws.views = [{ state:'frozen', ySplit:3 }];
+  }
+
+  function writeSingleSideSheet(ws, {title, list}){
+    ws.mergeCells('A1:E1');
+    ws.getCell('A1').value = title;
+    styleTitleCell(ws.getCell('A1'), XL.navy);
+
+    const headers = ['Documento','Fecha','Descripcion','Valor','Sucursal'];
+    headers.forEach((h,i) => {
+      const c = ws.getCell(3, i+1);
+      c.value = h; styleSubHeaderCell(c, {gold:false});
+    });
+
+    let r = 4;
+    list.forEach(a => {
+      const vals = [a.doc, a.fecha, a.desc||'', a.valor, a.categoria||''];
+      vals.forEach((v,i) => {
+        const cell = ws.getCell(r, i+1);
+        cell.value = v;
+        if (i===1) styleDataCell(cell, {date:true});
+        else if (i===3) styleDataCell(cell, {money:true});
+        else styleDataCell(cell);
+      });
+      r++;
+    });
+
+    ws.getColumn(1).width = 24; ws.getColumn(2).width = 12; ws.getColumn(3).width = 32;
+    ws.getColumn(4).width = 15; ws.getColumn(5).width = 14;
+    ws.views = [{ state:'frozen', ySplit:3 }];
+  }
+
+  async function buildWorkbook(r){
+    const labelA = r.labelA, labelB = r.labelB;
+    const wb = new ExcelJS.Workbook();
+    wb.creator = 'Conciliador intercompañía';
+    wb.created = new Date();
+
+    const okRows = sortForComparison(r.ok.map(x=>x.a)).map(a => {
+      const match = r.ok.find(x => x.a === a);
+      return { a, b: match.b, diff: a.valor - match.b.valor, extra: [match.notes && match.notes.length ? match.notes.join(' · ') : ''] };
+    });
+    const diffRows = sortForComparison(r.diff.map(x=>x.a)).map(a => {
+      const match = r.diff.find(x => x.a === a);
+      return { a, b: match.b, diff: a.valor - match.b.valor,
+        extra: [match.reasons.join(' · '), (match.notes && match.notes.length) ? match.notes.join(' · ') : ''] };
+    });
+
+    const wsOk = wb.addWorksheet('Conciliados');
+    if (okRows.length) {
+      writeComparativeSheet(wsOk, { titleA: labelA, titleB: labelB, rows: okRows, extraHeaders: ['Notas del cruce'] });
+    } else {
+      wsOk.getCell('A1').value = 'Sin partidas en esta categoría';
+    }
+
+    const wsDiff = wb.addWorksheet('Diferencias');
+    if (diffRows.length) {
+      writeComparativeSheet(wsDiff, { titleA: labelA, titleB: labelB, rows: diffRows, extraHeaders: ['Motivo', 'Notas del cruce'] });
+    } else {
+      wsDiff.getCell('A1').value = 'Sin partidas en esta categoría';
+    }
+
+    const wsA = wb.addWorksheet(('Pendientes ' + labelA).slice(0,31));
+    if (r.onlyA.length) writeSingleSideSheet(wsA, { title: 'Pendientes — ' + labelA, list: sortForComparison(r.onlyA) });
+    else wsA.getCell('A1').value = 'Sin partidas en esta categoría';
+
+    const wsB = wb.addWorksheet(('Pendientes ' + labelB).slice(0,31));
+    if (r.onlyB.length) writeSingleSideSheet(wsB, { title: 'Pendientes — ' + labelB, list: sortForComparison(r.onlyB) });
+    else wsB.getCell('A1').value = 'Sin partidas en esta categoría';
+
+    return wb;
+  }
+
+  function slug(s){
+    return (s||'archivo').toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'archivo';
+  }
+
+  async function downloadWorkbookFor(concNum){
+    const r = state.conc[concNum];
+    if (!r) return;
+    const wb = await buildWorkbook(r);
+    const buf = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'conciliacion_'+concNum+'_'+slug(r.labelA)+'_vs_'+slug(r.labelB)+'.xlsx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('btn-export').addEventListener('click', async () => {
+    if (!currentResults()) return;
+    const btn = document.getElementById('btn-export');
+    const prevHtml = btn.innerHTML;
+    btn.disabled = true;
+    try {
+      await downloadWorkbookFor(state.activeConc);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = prevHtml;
+    }
+  });
+
+  document.getElementById('btn-export-both').addEventListener('click', async () => {
+    if (!state.conc[1] || !state.conc[2]) return;
+    const btn = document.getElementById('btn-export-both');
+    const prevHtml = btn.innerHTML;
+    btn.disabled = true;
+    try {
+      await downloadWorkbookFor(1);
+      await downloadWorkbookFor(2);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = prevHtml;
+    }
+  });
+})();
+</script>
+</body>
+</html>
