@@ -835,7 +835,18 @@
     if (rawFecha instanceof Date) return rawFecha;
     if (typeof rawFecha === 'number') return excelSerialToDate(rawFecha);
     if (typeof rawFecha === 'string' && rawFecha.trim()){
-      const d = new Date(rawFecha);
+      const s = rawFecha.trim();
+      // Intentar formato DD/MM/YYYY
+      const parts = s.split(/[\/\-]/);
+      if (parts.length === 3) {
+          const d1 = parseInt(parts[0], 10);
+          const m1 = parseInt(parts[1], 10);
+          const y1 = parseInt(parts[2], 10);
+          if (d1 > 0 && d1 <= 31 && m1 > 0 && m1 <= 12 && y1 > 1900) {
+              return new Date(y1, m1 - 1, d1);
+          }
+      }
+      const d = new Date(s);
       if (!isNaN(d.getTime())) return d;
     }
     return null;
