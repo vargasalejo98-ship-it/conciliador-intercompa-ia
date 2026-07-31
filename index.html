@@ -142,11 +142,24 @@
   .search-box{font-family:'Inter',sans-serif;font-size:13px;padding:8px 13px;border:1px solid var(--line);border-radius:7px;min-width:220px;background:#fff;box-shadow:0 1px 2px rgba(16,26,44,.05);}
   .search-box:focus{outline:none;border-color:var(--gold);}
 
-  .tabs{display:flex;gap:2px;margin:22px 0 0;border-bottom:1px solid var(--line);flex-wrap:wrap;}
-  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.02em;padding:10px 16px;cursor:pointer;color:var(--ink-soft);border-bottom:2px solid transparent;user-select:none;}
-  .tab.active{color:var(--ink);border-bottom-color:var(--gold-line);font-weight:600;}
-  .tab.active .count{background:var(--gold-bg);color:var(--gold-line);}
+  .tabs{display:flex;gap:8px;margin:22px 0 0;flex-wrap:wrap;}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:.02em;padding:9px 16px;cursor:pointer;color:var(--ink-soft);user-select:none;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 1px 2px rgba(16,26,44,.05);transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .15s;}
+  .tab:hover{border-color:#C9D2DF;color:var(--ink);transform:translateY(-1px);}
+  .tab.active{color:#fff;font-weight:600;background:var(--gold-line);border-color:var(--gold-line);box-shadow:0 3px 10px rgba(200,19,40,.28);}
+  .tab.active .count{background:rgba(255,255,255,.25);color:#fff;}
   .tab .count{display:inline-block;margin-left:6px;background:var(--paper);border-radius:3px;padding:1px 7px;font-size:10.5px;}
+
+  .table-toolbar{display:flex;justify-content:flex-end;margin-top:14px;}
+  .expand-btn{display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.02em;padding:7px 13px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink-soft);cursor:pointer;box-shadow:0 1px 2px rgba(16,26,44,.05);transition:background .15s,border-color .15s,color .15s;}
+  .expand-btn svg{width:14px;height:14px;flex-shrink:0;}
+  .expand-btn:hover{border-color:var(--gold-line);color:var(--gold-line);background:var(--gold-bg);}
+
+  .table-backdrop{display:none;position:fixed;inset:0;background:rgba(10,10,11,.6);z-index:998;}
+  .table-backdrop.show{display:block;}
+  .table-close-btn{display:none;position:fixed;top:28px;right:34px;z-index:1000;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 16px;border-radius:7px;border:1px solid var(--gold-line);background:var(--navy);color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);}
+  .table-close-btn svg{width:14px;height:14px;}
+  .table-close-btn:hover{background:var(--gold-line);}
+  #table-wrap.expanded{position:fixed;top:44px;left:44px;right:44px;bottom:44px;z-index:999;max-height:none;margin-top:0;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.45);}
 
   .file-legend{display:flex;gap:10px;align-items:center;margin:14px 0 0;flex-wrap:wrap;}
   .file-chip{display:inline-flex;align-items:center;gap:7px;font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px 4px 4px;border-radius:20px;background:#fff;border:1px solid var(--line);color:var(--ink-soft);animation:chipIn .25s ease both;}
@@ -416,7 +429,18 @@
 
     <div class="file-legend" id="file-legend"></div>
     <div class="manual-match-bar" id="manual-match-bar"></div>
+    <div class="table-toolbar">
+      <button class="expand-btn" id="btn-expand-table" type="button" title="Ampliar tabla en ventana emergente">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 4H4V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 4H20V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M9 20H4V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 20H20V15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Ampliar tabla
+      </button>
+    </div>
     <div id="table-wrap"></div>
+    <div class="table-backdrop" id="table-backdrop"></div>
+    <button class="table-close-btn" id="btn-collapse-table" type="button">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 6L18 18M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      Cerrar
+    </button>
 
     <div class="export-row">
       <button class="ghost-btn secondary" id="btn-export-both">
@@ -1336,6 +1360,33 @@
       renderTable(tab.dataset.tab);
     });
   });
+
+  (function(){
+    const tableWrap = document.getElementById('table-wrap');
+    const expandBtn = document.getElementById('btn-expand-table');
+    const collapseBtn = document.getElementById('btn-collapse-table');
+    const backdrop = document.getElementById('table-backdrop');
+    if (!tableWrap || !expandBtn || !collapseBtn || !backdrop) return;
+
+    function expandTable(){
+      tableWrap.classList.add('expanded');
+      backdrop.classList.add('show');
+      collapseBtn.style.display = 'inline-flex';
+      document.body.style.overflow = 'hidden';
+    }
+    function collapseTable(){
+      tableWrap.classList.remove('expanded');
+      backdrop.classList.remove('show');
+      collapseBtn.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+    expandBtn.addEventListener('click', expandTable);
+    collapseBtn.addEventListener('click', collapseTable);
+    backdrop.addEventListener('click', collapseTable);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && tableWrap.classList.contains('expanded')) collapseTable();
+    });
+  })();
 
   function excelDate(d){
     // SheetJS necesita fechas como número de serie de Excel para que la columna
