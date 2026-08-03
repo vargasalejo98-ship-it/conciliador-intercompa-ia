@@ -20,10 +20,12 @@
     --steel:#3C5570; --steel-bg:#E6EBF0;
     --amber:#C97A17; --amber-bg:#FBEEDD;
   }
-  .format-selector{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);}
+  .format-selector{display:flex;align-items:center;gap:9px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);flex-wrap:wrap;}
   .format-selector label{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:.05em;}
-  .format-selector select{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;padding:4px 24px 4px 8px;border:1px solid var(--line);border-radius:4px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6B70' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 6px center;appearance:none;cursor:pointer;color:var(--ink);transition:border-color .15s;}
-  .format-selector select:hover{border-color:var(--gold-line);}
+  .format-btns{display:flex;gap:6px;}
+  .format-btn{font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:5px 11px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink-soft);cursor:pointer;box-shadow:0 1px 2px rgba(16,26,44,.05);transition:background .15s,border-color .15s,color .15s,box-shadow .15s,transform .15s;}
+  .format-btn:hover{border-color:#C9D2DF;color:var(--ink);transform:translateY(-1px);}
+  .format-btn.active{color:#fff;background:var(--gold-line);border-color:var(--gold-line);box-shadow:0 3px 10px rgba(200,19,40,.28);}
   .format-badge{position:absolute;top:12px;right:12px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;background:var(--paper);color:var(--ink-soft);text-transform:uppercase;letter-spacing:.05em;pointer-events:none;z-index:1;transition:all .2s;}
   .format-badge.active{background:var(--green-bg);color:var(--green);}
 
@@ -37,10 +39,15 @@
   .history-companies{font-weight:700;font-size:13px;margin-bottom:8px;color:var(--navy);}
   .history-stats{display:flex;gap:12px;font-size:11px;color:var(--ink-soft);}
   .history-stats b{color:var(--gold);}
+  .history-actions{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);}
+  .history-no-export{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#9AA5B1;}
   .delete-history{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;border:none;background:var(--paper);color:var(--ink-soft);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;}
   .delete-history:hover{background:var(--gold-line);color:#fff;}
 
   *{box-sizing:border-box;}
+  a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, [tabindex]:focus-visible{
+    outline:2px solid var(--gold-line); outline-offset:2px; border-radius:3px;
+  }
   body{margin:0;background:var(--paper);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
   .app{max-width:1240px;margin:0 auto;padding:0 24px 90px;}
   header.top{background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);color:#fff;padding:28px 24px 32px;margin-bottom:-28px;border-bottom:2px solid var(--gold-line);position:relative;overflow:hidden;box-shadow:0 2px 18px rgba(0,0,0,.4);}
@@ -162,6 +169,15 @@
   .ghost-btn.secondary svg{color:var(--steel);}
 
   .controls-row{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:28px;flex-wrap:wrap;}
+  .range-filters{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .range-filters label{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:.05em;margin-right:2px;}
+  .range-filters .sep{color:#B7BDC6;font-size:11px;}
+  .mini-input{font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 9px;border:1px solid var(--line);border-radius:6px;background:#fff;box-shadow:0 1px 2px rgba(16,26,44,.05);color:var(--ink);}
+  .mini-input:focus{outline:none;border-color:var(--gold);}
+  .mini-input.date{width:135px;}
+  .mini-input.amount{width:88px;}
+  .clear-filters-btn{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink-soft);background:none;border:none;cursor:pointer;text-decoration:underline;padding:0;}
+  .clear-filters-btn:hover{color:var(--gold-line);}
   .segmented{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(16,26,44,.05);}
   .segmented button{font-family:'IBM Plex Mono',monospace;font-size:11.5px;padding:7px 13px;border:none;background:transparent;cursor:pointer;color:var(--ink-soft);border-right:1px solid var(--line);}
   .segmented button:last-child{border-right:none;}
@@ -183,6 +199,20 @@
 
   .table-backdrop{display:none;position:fixed;inset:0;background:rgba(10,10,11,.68);backdrop-filter:blur(2px);z-index:998;}
   .table-backdrop.show{display:block;}
+
+  .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(10,10,11,.68);backdrop-filter:blur(2px);z-index:2000;align-items:center;justify-content:center;padding:20px;}
+  .modal-backdrop.show{display:flex;}
+  .modal-box{background:var(--paper-card);border-radius:14px;border-top:3px solid var(--gold-line);box-shadow:0 30px 70px rgba(0,0,0,.5);width:min(420px,100%);padding:24px;animation:modalPop .22s cubic-bezier(.2,.8,.3,1) both;}
+  .modal-title{font-family:'Inter',sans-serif;font-weight:800;font-size:16px;color:var(--ink);margin:0 0 8px;}
+  .modal-message{font-size:13.5px;color:var(--ink-soft);line-height:1.55;margin:0 0 16px;}
+  .modal-input{width:100%;font-family:'Inter',sans-serif;font-size:13.5px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;resize:vertical;margin:0 0 18px;box-sizing:border-box;color:var(--ink);}
+  .modal-input:focus{outline:none;border-color:var(--gold-line);}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;}
+  .modal-btn{font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 18px;border-radius:7px;cursor:pointer;transition:transform .15s,box-shadow .15s,background .15s,border-color .15s;}
+  .modal-btn.cancel{background:#fff;border:1px solid var(--line);color:var(--ink-soft);}
+  .modal-btn.cancel:hover{border-color:#C9D2DF;color:var(--ink);}
+  .modal-btn.confirm{background:var(--gold-line);border:1px solid var(--gold-line);color:#fff;box-shadow:0 3px 10px rgba(200,19,40,.28);}
+  .modal-btn.confirm:hover{background:var(--burgundy);transform:translateY(-1px);}
   @keyframes modalPop{from{opacity:0;transform:translate(-50%,-50%) scale(.96);}to{opacity:1;transform:translate(-50%,-50%) scale(1);}}
   .table-close-btn{display:none;position:fixed;top:28px;right:34px;z-index:1000;align-items:center;gap:8px;font-family:'Inter',sans-serif;font-weight:600;font-size:13px;padding:9px 16px;border-radius:7px;border:1px solid var(--gold-line);background:var(--navy);color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35);}
   .table-close-btn svg{width:14px;height:14px;}
@@ -268,6 +298,10 @@
 
   .check{color:var(--green);font-weight:700;margin-left:7px;}
   .diff-note{font-size:12px;color:var(--burgundy);margin-top:3px;}
+  .manual-note{font-size:12px;color:var(--steel);margin-top:6px;padding-top:6px;border-top:1px dashed var(--line);display:flex;align-items:flex-start;gap:5px;font-weight:500;}
+  .note-edit-btn{border:none;background:none;color:#9AA5B1;cursor:pointer;font-size:11px;padding:0;flex-shrink:0;}
+  .note-edit-btn:hover{color:var(--steel);}
+  .note-btn{margin-top:6px;}
 
   .doc-pair{display:flex;flex-direction:column;gap:4px;}
   .doc-line{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--ink);line-height:1.3;}
@@ -304,7 +338,7 @@
         <p class="eyebrow">Cuentas por cobrar &middot; Cuentas por pagar</p>
         <div class="title-row">
           <h1>Conciliador intercompañía</h1>
-          <button class="info-btn" id="info-toggle" title="Cómo funciona">i</button>
+          <button class="info-btn" id="info-toggle" title="Cómo funciona" aria-label="Cómo funciona el conciliador" aria-expanded="false" aria-controls="info-panel">i</button>
         </div>
       </div>
     </div>
@@ -324,15 +358,15 @@
       <p class="group-label"><span class="dot"></span>Empresa 1</p>
       <div class="format-selector">
         <label>Formato:</label>
-        <select id="format-e1">
-          <option value="siesa">Siesa</option>
-          <option value="siigo">Siigo</option>
-          <option value="generico">Genérico / Otro</option>
-        </select>
+        <div class="format-btns" id="format-e1" role="group" aria-label="Formato de Empresa 1">
+          <button type="button" class="format-btn active" data-format="siesa" aria-pressed="true">Siesa</button>
+          <button type="button" class="format-btn" data-format="siigo" aria-pressed="false">Siigo</button>
+          <button type="button" class="format-btn" data-format="generico" aria-pressed="false">Genérico</button>
+        </div>
       </div>
       <div class="group-cards" style="margin-top:14px;">
         <div class="card small" id="card-e1cxc">
-          <button class="clear-btn" id="clear-e1cxc" title="Quitar archivo">✕</button>
+          <button class="clear-btn" id="clear-e1cxc" title="Quitar archivo" aria-label="Quitar archivo cargado en Archivo A, Empresa 1">✕</button>
           <h3><span class="step-no">1</span><span>Archivo A<span class="step-sub">Empresa 1</span></span></h3>
           <p class="company placeholder" id="company-e1cxc">Sin cargar</p>
           <label class="drop" id="drop-e1cxc">
@@ -347,7 +381,7 @@
           <div class="progress" id="progress-e1cxc"><i></i></div>
         </div>
         <div class="card small" id="card-e1cxp">
-          <button class="clear-btn" id="clear-e1cxp" title="Quitar archivo">✕</button>
+          <button class="clear-btn" id="clear-e1cxp" title="Quitar archivo" aria-label="Quitar archivo cargado en Archivo B, Empresa 1">✕</button>
           <h3><span class="step-no">2</span><span>Archivo B<span class="step-sub">Empresa 1</span></span></h3>
           <p class="company placeholder" id="company-e1cxp">Sin cargar</p>
           <label class="drop" id="drop-e1cxp">
@@ -368,15 +402,15 @@
       <p class="group-label"><span class="dot"></span>Empresa 2</p>
       <div class="format-selector">
         <label>Formato:</label>
-        <select id="format-e2">
-          <option value="siesa">Siesa</option>
-          <option value="siigo">Siigo</option>
-          <option value="generico">Genérico / Otro</option>
-        </select>
+        <div class="format-btns" id="format-e2" role="group" aria-label="Formato de Empresa 2">
+          <button type="button" class="format-btn active" data-format="siesa" aria-pressed="true">Siesa</button>
+          <button type="button" class="format-btn" data-format="siigo" aria-pressed="false">Siigo</button>
+          <button type="button" class="format-btn" data-format="generico" aria-pressed="false">Genérico</button>
+        </div>
       </div>
       <div class="group-cards" style="margin-top:14px;">
         <div class="card small" id="card-e2cxc">
-          <button class="clear-btn" id="clear-e2cxc" title="Quitar archivo">✕</button>
+          <button class="clear-btn" id="clear-e2cxc" title="Quitar archivo" aria-label="Quitar archivo cargado en Archivo A, Empresa 2">✕</button>
           <h3><span class="step-no">3</span><span>Archivo A<span class="step-sub">Empresa 2</span></span></h3>
           <p class="company placeholder" id="company-e2cxc">Sin cargar</p>
           <label class="drop" id="drop-e2cxc">
@@ -391,7 +425,7 @@
           <div class="progress" id="progress-e2cxc"><i></i></div>
         </div>
         <div class="card small" id="card-e2cxp">
-          <button class="clear-btn" id="clear-e2cxp" title="Quitar archivo">✕</button>
+          <button class="clear-btn" id="clear-e2cxp" title="Quitar archivo" aria-label="Quitar archivo cargado en Archivo B, Empresa 2">✕</button>
           <h3><span class="step-no">4</span><span>Archivo B<span class="step-sub">Empresa 2</span></span></h3>
           <p class="company placeholder" id="company-e2cxp">Sin cargar</p>
           <label class="drop" id="drop-e2cxp">
@@ -409,7 +443,7 @@
     </div>
   </div>
 
-  <div id="error-box"></div>
+  <div id="error-box" role="alert" aria-live="polite"></div>
 
   <div class="actions" style="display:flex; flex-direction:column; align-items:center; gap:12px;">
     <button class="primary" id="btn-conciliar" disabled>
@@ -424,12 +458,12 @@
 
   <div class="results" id="results">
     <div class="conc-selector" id="conc-selector">
-      <div class="conc-btn active" data-conc="1">
+      <div class="conc-btn active" data-conc="1" role="button" tabindex="0" aria-pressed="true">
         <div class="cb-label">Conciliación 1</div>
         <div class="cb-title" id="conc1-title">CxC Empresa 1 vs CxP Empresa 2</div>
         <div class="cb-sub" id="conc1-sub"></div>
       </div>
-      <div class="conc-btn" data-conc="2">
+      <div class="conc-btn" data-conc="2" role="button" tabindex="0" aria-pressed="false">
         <div class="cb-label">Conciliación 2</div>
         <div class="cb-title" id="conc2-title">CxP Empresa 1 vs CxC Empresa 2</div>
         <div class="cb-sub" id="conc2-sub"></div>
@@ -461,20 +495,31 @@
     </div>
 
     <div class="controls-row">
-      <div class="segmented" id="suc-filter">
-        <button class="active" data-suc="ALL">Todas las sucursales</button>
-        <button data-suc="OFICIAL">Oficial (001)</button>
-        <button data-suc="PRUEBA">Prueba</button>
+      <div class="segmented" id="suc-filter" role="group" aria-label="Filtrar por sucursal">
+        <button class="active" data-suc="ALL" aria-pressed="true">Todas las sucursales</button>
+        <button data-suc="OFICIAL" aria-pressed="false">Oficial (001)</button>
+        <button data-suc="PRUEBA" aria-pressed="false">Prueba</button>
       </div>
-      <input class="search-box" id="search-box" type="text" placeholder="Buscar documento o descripción…">
+      <div class="range-filters">
+        <label for="filter-date-from">Fecha</label>
+        <input type="date" id="filter-date-from" class="mini-input date" aria-label="Fecha desde">
+        <span class="sep">–</span>
+        <input type="date" id="filter-date-to" class="mini-input date" aria-label="Fecha hasta">
+        <label for="filter-amount-min">Monto</label>
+        <input type="number" id="filter-amount-min" class="mini-input amount" placeholder="Mín" step="any" aria-label="Monto mínimo">
+        <span class="sep">–</span>
+        <input type="number" id="filter-amount-max" class="mini-input amount" placeholder="Máx" step="any" aria-label="Monto máximo">
+        <button type="button" class="clear-filters-btn" id="btn-clear-range-filters">Limpiar</button>
+      </div>
+      <input class="search-box" id="search-box" type="text" placeholder="Buscar documento o descripción…" aria-label="Buscar documento o descripción">
     </div>
 
-    <div class="tabs">
-      <div class="tab active" data-tab="ok">Conciliados <span class="count" id="count-ok">0</span></div>
-      <div class="tab" data-tab="diff">Diferencias <span class="count" id="count-diff">0</span></div>
-      <div class="tab" data-tab="onlycxc">Solo lado A <span class="count" id="count-onlycxc">0</span></div>
-      <div class="tab" data-tab="onlycxp">Solo lado B <span class="count" id="count-onlycxp">0</span></div>
-      <div class="tab" data-tab="comparativa">Vista comparativa <span class="count" id="count-comparativa">0</span></div>
+    <div class="tabs" role="tablist" aria-label="Vistas de resultados">
+      <div class="tab active" data-tab="ok" role="tab" tabindex="0" aria-selected="true">Conciliados <span class="count" id="count-ok">0</span></div>
+      <div class="tab" data-tab="diff" role="tab" tabindex="0" aria-selected="false">Diferencias <span class="count" id="count-diff">0</span></div>
+      <div class="tab" data-tab="onlycxc" role="tab" tabindex="0" aria-selected="false">Solo lado A <span class="count" id="count-onlycxc">0</span></div>
+      <div class="tab" data-tab="onlycxp" role="tab" tabindex="0" aria-selected="false">Solo lado B <span class="count" id="count-onlycxp">0</span></div>
+      <div class="tab" data-tab="comparativa" role="tab" tabindex="0" aria-selected="false">Vista comparativa <span class="count" id="count-comparativa">0</span></div>
     </div>
 
     <div class="file-legend" id="file-legend"></div>
@@ -516,14 +561,79 @@
     <div class="fl-mark"><img src="data:image/jpeg;base64,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" alt="El Templo de la Moda"></div>
   </div>
 
+  <div class="modal-backdrop" id="modal-backdrop">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <h3 class="modal-title" id="modal-title"></h3>
+      <p class="modal-message" id="modal-message"></p>
+      <textarea class="modal-input" id="modal-input" rows="2" style="display:none;"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="modal-btn cancel" id="modal-cancel"></button>
+        <button type="button" class="modal-btn confirm" id="modal-confirm"></button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
 (function(){
+  // =====================================================================
+  // ESTADO GLOBAL
+  // =====================================================================
   const state = { files: { e1cxc:null, e1cxp:null, e2cxc:null, e2cxp:null }, format: { 1: 'siesa', 2: 'siesa' }, conc: { 1: null, 2: null }, activeConc: 1, sucFilter: 'ALL', search: '', activeTab: 'ok', sort: {},
-    manual: { 1: { matches: [], discards: [] }, 2: { matches: [], discards: [] } }, manualSelect: { A: null, B: null } };
+    range: { dateFrom: null, dateTo: null, amountMin: null, amountMax: null },
+    manual: { 1: { matches: [], discards: [], valueNotes: [] }, 2: { matches: [], discards: [], valueNotes: [] } }, manualSelect: { A: null, B: null } };
 
   const HISTORY_KEY = 'conciliador_historial_v1';
+  const HISTORY_MAX_ENTRIES = 5; // antes 10: cada entrada ahora guarda los registros completos (ver toExportableResult), así que reducimos la cantidad para no agotar la cuota de localStorage.
+
+  // =====================================================================
+  // HISTORIAL (localStorage)
+  // =====================================================================
+
+  // Versión ligera de un resultado de conciliación, pensada para guardarse en el
+  // historial y permitir volver a descargar el Excel más tarde. Deja afuera
+  // `rawA`/`rawB` (las listas completas antes de cruzar) porque solo se usan
+  // para los totales en pantalla, no para el Excel, y duplicarían buena parte
+  // del tamaño ya cubierto por ok/diff/onlyA/onlyB.
+  function toExportableResult(r){
+    if (!r) return null;
+    return { ok: r.ok, diff: r.diff, onlyA: r.onlyA, onlyB: r.onlyB, labelA: r.labelA, labelB: r.labelB };
+  }
+
+  // Al leer del historial, JSON.parse devuelve las fechas como texto ISO.
+  // Este reviver las reconstruye como Date en cualquier campo llamado "fecha",
+  // sin importar en qué nivel de anidación esté (ok[].a.fecha, onlyA[].fecha, etc.).
+  function historyDateReviver(key, value){
+    if (key === 'fecha' && typeof value === 'string') {
+      const d = new Date(value);
+      if (!isNaN(d.getTime())) return d;
+    }
+    return value;
+  }
+
+  // Wrappers seguros: localStorage puede fallar por cuota llena, modo privado
+  // que lo bloquea, o un valor corrupto que ya no es JSON válido.
+  function loadHistorySafe(){
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      const parsed = raw ? JSON.parse(raw, historyDateReviver) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch(e) {
+      console.warn('No se pudo leer el historial guardado:', e);
+      return [];
+    }
+  }
+  function saveHistorySafe(history){
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      return true;
+    } catch(e) {
+      console.warn('No se pudo guardar el historial:', e);
+      showError('No se pudo guardar esta conciliación en el historial: el almacenamiento local está lleno o bloqueado por el navegador (modo privado).');
+      return false;
+    }
+  }
 
   function saveToHistory() {
     const asg = companyAssignments();
@@ -542,18 +652,28 @@
         c1: c1 ? { ok: c1.ok.length, diff: c1.diff.length, onlyA: c1.onlyA.length, onlyB: c1.onlyB.length } : null,
         c2: c2 ? { ok: c2.ok.length, diff: c2.diff.length, onlyA: c2.onlyA.length, onlyB: c2.onlyB.length } : null
       },
-      // Guardamos una versión ligera del estado para poder reconstruir visualmente si se desea
-      // Por ahora solo guardamos metadatos para el historial
+      // Guardamos los registros completos (no solo los totales) para poder
+      // volver a generar el Excel de esta conciliación desde el historial.
+      results: {
+        c1: toExportableResult(c1),
+        c2: toExportableResult(c2)
+      }
     };
 
-    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    const history = loadHistorySafe();
     history.unshift(entry);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 10))); // Guardar últimos 10
+    if (!saveHistorySafe(history.slice(0, HISTORY_MAX_ENTRIES))) {
+      // Si falló por espacio, reintentamos guardando solo los metadatos (sin
+      // `results`) de las entradas más recientes, para no perder el historial
+      // visible aunque no se pueda volver a exportar todas.
+      const lightHistory = history.slice(0, HISTORY_MAX_ENTRIES).map(h => ({...h, results: undefined}));
+      saveHistorySafe(lightHistory);
+    }
     renderHistory();
   }
 
   function renderHistory() {
-    const history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    const history = loadHistorySafe();
     const panel = document.getElementById('history-panel');
     const list = document.getElementById('history-list');
     
@@ -569,13 +689,19 @@
       let statsHtml = '';
       if (h.stats.c1) statsHtml += `<div>C1: <b>${h.stats.c1.ok}</b> ok / <b>${h.stats.c1.diff}</b> dif</div>`;
       if (h.stats.c2) statsHtml += `<div>C2: <b>${h.stats.c2.ok}</b> ok / <b>${h.stats.c2.diff}</b> dif</div>`;
-      
+
+      const hasResults = !!(h.results && (h.results.c1 || h.results.c2));
+      const actionHtml = hasResults
+        ? `<button type="button" class="mini-btn" onclick="window.downloadHistoryItem(${h.id}, event)">⭳ Descargar Excel</button>`
+        : `<span class="history-no-export" title="Esta conciliación se guardó antes de habilitar la descarga desde el historial, o no cupo por espacio">Excel no disponible</span>`;
+
       return `
         <div class="history-item">
-          <button class="delete-history" onclick="window.deleteHistoryItem(${h.id}, event)">✕</button>
+          <button class="delete-history" onclick="window.deleteHistoryItem(${h.id}, event)" aria-label="Eliminar esta conciliación del historial">✕</button>
           <div class="history-date">${dateStr}</div>
           <div class="history-companies">${h.companies.e1} vs ${h.companies.e2}</div>
           <div class="history-stats">${statsHtml}</div>
+          <div class="history-actions">${actionHtml}</div>
         </div>
       `;
     }).join('');
@@ -583,19 +709,45 @@
 
   window.deleteHistoryItem = (id, e) => {
     e.stopPropagation();
-    let history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
-    history = history.filter(h => h.id !== id);
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    const history = loadHistorySafe().filter(h => h.id !== id);
+    saveHistorySafe(history);
     renderHistory();
   };
 
-  document.getElementById('btn-clear-history').addEventListener('click', () => {
-    if (confirm('¿Limpiar todo el historial?')) {
-      localStorage.removeItem(HISTORY_KEY);
+  window.downloadHistoryItem = async (id, e) => {
+    e.stopPropagation();
+    const history = loadHistorySafe();
+    const h = history.find(x => x.id === id);
+    if (!h || !h.results) return;
+    const btn = e.target.closest('button');
+    const prevText = btn ? btn.textContent : '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Generando…'; }
+    try {
+      if (h.results.c1) await downloadWorkbookForResult(h.results.c1, '1');
+      if (h.results.c2) await downloadWorkbookForResult(h.results.c2, '2');
+    } catch(err) {
+      showError('No se pudo generar el Excel de esta conciliación guardada: ' + err.message);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = prevText; }
+    }
+  };
+
+  document.getElementById('btn-clear-history').addEventListener('click', async () => {
+    const ok = await showModal({
+      title: 'Limpiar historial',
+      message: 'Se eliminarán todas las conciliaciones guardadas en este navegador. Esta acción no se puede deshacer.',
+      confirmText: 'Limpiar historial',
+      cancelText: 'Cancelar'
+    });
+    if (ok) {
+      try { localStorage.removeItem(HISTORY_KEY); } catch(e) { console.warn('No se pudo limpiar el historial:', e); }
       renderHistory();
     }
   });
 
+  // =====================================================================
+  // PARSEO DE ARCHIVOS (PDF/Excel → filas → registros normalizados)
+  // =====================================================================
   async function readPdf(file) {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
@@ -607,7 +759,11 @@
       // Intentar reconstruir filas básicas por posición y si no, por saltos
       fullText += strings.join("  ") + "\n";
     }
-    
+
+    if (fullText.trim().length < 20) {
+      throw new Error('El PDF no contiene texto seleccionable (parece ser un escaneo o imagen). Esta app no hace OCR: exporta el reporte con texto real desde el sistema de origen, o cárgalo como Excel (.xls/.xlsx).');
+    }
+
     // Convertir texto a AOA (Array of Arrays)
     // Es una aproximación simple: cada línea es una fila, separada por espacios múltiples
     const lines = fullText.split('\n');
@@ -785,7 +941,7 @@
   }
 
   function clearManualState(){
-    state.manual = { 1: { matches: [], discards: [] }, 2: { matches: [], discards: [] } };
+    state.manual = { 1: { matches: [], discards: [], valueNotes: [] }, 2: { matches: [], discards: [], valueNotes: [] } };
     state.manualSelect = { A: null, B: null };
   }
 
@@ -796,7 +952,10 @@
   document.getElementById('header-meta').textContent = 'Generado ' + new Date().toLocaleDateString('es-CO', {day:'2-digit', month:'short', year:'numeric'});
 
   document.getElementById('info-toggle').addEventListener('click', () => {
-    document.getElementById('info-panel').classList.toggle('open');
+    const panel = document.getElementById('info-panel');
+    const btn = document.getElementById('info-toggle');
+    panel.classList.toggle('open');
+    btn.setAttribute('aria-expanded', panel.classList.contains('open') ? 'true' : 'false');
   });
 
   function excelSerialToDate(serial){
@@ -979,6 +1138,61 @@
     document.getElementById('error-box').innerHTML = msg ? '<div class="error-msg">'+msg+'</div>' : '';
   }
 
+  // Modal genérico (reemplaza confirm()/prompt() nativos) que sigue el mismo
+  // lenguaje visual del resto de la app. Devuelve una Promise:
+  //  - showInput=false: resuelve `true` si confirma, `null` si cancela.
+  //  - showInput=true: resuelve el texto ingresado (puede ser '') si confirma, `null` si cancela.
+  // =====================================================================
+  // MODAL GENÉRICO (reemplaza confirm()/prompt() nativos)
+  // =====================================================================
+  function showModal({title, message, showInput = false, inputValue = '', inputPlaceholder = '', confirmText = 'Confirmar', cancelText = 'Cancelar'}){
+    return new Promise((resolve) => {
+      const backdrop = document.getElementById('modal-backdrop');
+      const titleEl = document.getElementById('modal-title');
+      const msgEl = document.getElementById('modal-message');
+      const inputEl = document.getElementById('modal-input');
+      const cancelBtn = document.getElementById('modal-cancel');
+      const confirmBtn = document.getElementById('modal-confirm');
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      cancelBtn.textContent = cancelText;
+      confirmBtn.textContent = confirmText;
+
+      if (showInput) {
+        inputEl.style.display = '';
+        inputEl.value = inputValue;
+        inputEl.placeholder = inputPlaceholder;
+      } else {
+        inputEl.style.display = 'none';
+      }
+
+      function cleanup(result){
+        backdrop.classList.remove('show');
+        document.removeEventListener('keydown', onKeydown);
+        cancelBtn.removeEventListener('click', onCancel);
+        confirmBtn.removeEventListener('click', onConfirm);
+        backdrop.removeEventListener('click', onBackdropClick);
+        resolve(result);
+      }
+      function onCancel(){ cleanup(null); }
+      function onConfirm(){ cleanup(showInput ? inputEl.value.trim() : true); }
+      function onBackdropClick(e){ if (e.target === backdrop) cleanup(null); }
+      function onKeydown(e){ if (e.key === 'Escape') cleanup(null); }
+
+      cancelBtn.addEventListener('click', onCancel);
+      confirmBtn.addEventListener('click', onConfirm);
+      backdrop.addEventListener('click', onBackdropClick);
+      document.addEventListener('keydown', onKeydown);
+
+      backdrop.classList.add('show');
+      setTimeout(() => (showInput ? inputEl : confirmBtn).focus(), 50);
+    });
+  }
+
+  // =====================================================================
+  // CARGA DE ARCHIVOS (drag & drop, validación, un slot por casilla)
+  // =====================================================================
   function setupSlot(slotKey, dropId, inputId, loadedId, companyId, cardId, clearId, progressId, getFormat){
     const drop = document.getElementById(dropId);
     const input = document.getElementById(inputId);
@@ -1004,9 +1218,34 @@
 
     const fileIconSvg = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13.5L9.5 18L19 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+    const ALLOWED_EXT = ['.xls', '.xlsx', '.pdf'];
+    const MAX_FILE_MB = 25;
+
+    function validateFile(file){
+      const nameLower = file.name.toLowerCase();
+      const hasValidExt = ALLOWED_EXT.some(ext => nameLower.endsWith(ext));
+      if (!hasValidExt) {
+        return 'Formato no soportado. Solo se aceptan archivos .XLS, .XLSX o .PDF.';
+      }
+      if (file.size === 0) {
+        return 'El archivo está vacío.';
+      }
+      if (file.size > MAX_FILE_MB * 1024 * 1024) {
+        return 'El archivo pesa más de ' + MAX_FILE_MB + ' MB. Verifica que sea el reporte correcto.';
+      }
+      return null;
+    }
+
     function handleFile(file){
       if (!file) return;
       showError('');
+
+      const validationError = validateFile(file);
+      if (validationError) {
+        showError('Archivo "'+file.name+'": ' + validationError);
+        return;
+      }
+
       progress.classList.add('active');
       progress.classList.remove('determinate');
       const bar = progress.querySelector('i');
@@ -1115,11 +1354,15 @@
   function updateFormatUI(companyNum, val) {
     state.format[companyNum] = val;
     const badge = document.getElementById('badge-e' + companyNum);
-    const select = document.getElementById('format-e' + companyNum);
+    const btnGroup = document.getElementById('format-e' + companyNum);
     const label = val === 'siesa' ? 'Siesa' : (val === 'siigo' ? 'Siigo' : 'Genérico');
     badge.textContent = label;
     badge.classList.add('active');
-    select.value = val;
+    btnGroup.querySelectorAll('.format-btn').forEach(b => {
+      const isActive = b.dataset.format === val;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
   }
 
   function handleFormatChange(companyNum, val){
@@ -1141,11 +1384,21 @@
     }
   }
 
-  document.getElementById('format-e1').addEventListener('change', (e) => handleFormatChange(1, e.target.value));
-  document.getElementById('format-e2').addEventListener('change', (e) => handleFormatChange(2, e.target.value));
+  document.querySelectorAll('#format-e1 .format-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleFormatChange(1, btn.dataset.format));
+  });
+  document.querySelectorAll('#format-e2 .format-btn').forEach(btn => {
+    btn.addEventListener('click', () => handleFormatChange(2, btn.dataset.format));
+  });
 
-  document.getElementById('btn-nueva-conciliacion').addEventListener('click', () => {
-    if (confirm('¿Estás seguro de que quieres empezar una nueva conciliación? Se borrarán los archivos cargados actualmente.')) {
+  document.getElementById('btn-nueva-conciliacion').addEventListener('click', async () => {
+    const ok = await showModal({
+      title: 'Nueva conciliación',
+      message: 'Se borrarán los archivos cargados actualmente para ambas empresas. Esta acción no se puede deshacer.',
+      confirmText: 'Empezar de nuevo',
+      cancelText: 'Cancelar'
+    });
+    if (ok) {
         ['e1cxc', 'e1cxp', 'e2cxc', 'e2cxp'].forEach(s => {
             state.files[s] = null;
             const card = document.getElementById('card-' + s);
@@ -1157,6 +1410,9 @@
         state.conc = { 1: null, 2: null };
         document.getElementById('results').style.display = 'none';
         showError('');
+        dateFromInput.value = ''; dateToInput.value = '';
+        amountMinInput.value = ''; amountMaxInput.value = '';
+        state.range = { dateFrom: null, dateTo: null, amountMin: null, amountMax: null };
         updateButton();
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1173,6 +1429,9 @@
   }
   function sum(list, getVal){ return list.reduce((acc,x) => acc + getVal(x), 0); }
 
+  // =====================================================================
+  // MOTOR DE CONCILIACIÓN (cruce A vs B + overrides manuales)
+  // =====================================================================
   function reconcile(recordsA, recordsB){
     // Mapa estricto: misma categoría de sucursal + mismo consecutivo normalizado.
     const byKeyStrictB = new Map();
@@ -1300,6 +1559,16 @@
         result.ok.push({a,b,notes,manual:true});
       }
     });
+
+    // Notas manuales sobre diferencias de valor (ej. "aprobado por tesorería,
+    // corresponde a retención en la fuente"). No cambian el resultado del
+    // cruce, solo se muestran junto al motivo y viajan al Excel exportado.
+    if (m.valueNotes && m.valueNotes.length){
+      result.diff.forEach(d => {
+        const found = m.valueNotes.find(vn => vn.key === recKey(d.a));
+        if (found) d.note = found.note;
+      });
+    }
     return result;
   }
 
@@ -1350,15 +1619,20 @@
     runReconcile();
     if (!state.conc[1] && !state.conc[2]) return;
     state.activeConc = state.conc[1] ? 1 : 2;
-    document.querySelectorAll('.conc-btn').forEach(b => b.classList.toggle('active', parseInt(b.dataset.conc,10)===state.activeConc));
+    document.querySelectorAll('.conc-btn').forEach(b => {
+      const isActive = parseInt(b.dataset.conc,10)===state.activeConc;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+    });
     renderResults(true);
     saveToHistory();
   });
 
   document.querySelectorAll('.conc-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.conc-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.conc-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       state.activeConc = parseInt(btn.dataset.conc, 10);
       // Al cambiar de conciliación se conserva la pestaña, la sucursal y la
       // búsqueda activas (resetTab=false); las selecciones de emparejamiento
@@ -1366,21 +1640,73 @@
       state.manualSelect = { A:null, B:null };
       renderResults(false);
     });
+    // role="button" en un <div> no dispara click() con teclado por sí solo.
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+    });
   });
 
   document.querySelectorAll('#suc-filter button').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('#suc-filter button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#suc-filter button').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed', 'false'); });
       btn.classList.add('active');
+      btn.setAttribute('aria-pressed', 'true');
       state.sucFilter = btn.dataset.suc;
       if (state.conc[1] || state.conc[2]){ runReconcile(); renderResults(false); }
     });
   });
 
-  document.getElementById('search-box').addEventListener('input', (e) => {
+  // Pequeño debounce: con tablas grandes, re-renderizar en cada tecla se
+  // siente tosco. Esperamos a que la persona haga una pausa al escribir.
+  function debounce(fn, wait){
+    let t;
+    return function(...args){
+      clearTimeout(t);
+      t = setTimeout(() => fn.apply(this, args), wait);
+    };
+  }
+
+  document.getElementById('search-box').addEventListener('input', debounce((e) => {
     state.search = e.target.value.trim().toLowerCase();
     renderTable(state.activeTab);
+  }, 200));
+
+  // Filtro por rango de fecha y monto (además del buscador de texto y el
+  // filtro de sucursal). Se evalúa contra el "lado A" del par para las
+  // pestañas comparativas, y contra el registro mismo en "Solo lado A/B".
+  const dateFromInput = document.getElementById('filter-date-from');
+  const dateToInput = document.getElementById('filter-date-to');
+  const amountMinInput = document.getElementById('filter-amount-min');
+  const amountMaxInput = document.getElementById('filter-amount-max');
+
+  function applyRangeFilterInputs(){
+    state.range.dateFrom = dateFromInput.value ? new Date(dateFromInput.value + 'T00:00:00') : null;
+    state.range.dateTo = dateToInput.value ? new Date(dateToInput.value + 'T23:59:59.999') : null;
+    const min = parseFloat(amountMinInput.value);
+    const max = parseFloat(amountMaxInput.value);
+    state.range.amountMin = isNaN(min) ? null : min;
+    state.range.amountMax = isNaN(max) ? null : max;
+    renderTable(state.activeTab);
+  }
+
+  [dateFromInput, dateToInput].forEach(el => el.addEventListener('change', applyRangeFilterInputs));
+  [amountMinInput, amountMaxInput].forEach(el => el.addEventListener('input', debounce(applyRangeFilterInputs, 250)));
+
+  document.getElementById('btn-clear-range-filters').addEventListener('click', () => {
+    dateFromInput.value = ''; dateToInput.value = '';
+    amountMinInput.value = ''; amountMaxInput.value = '';
+    applyRangeFilterInputs();
   });
+
+  function matchesRange(rec){
+    if (!rec) return true;
+    const { dateFrom, dateTo, amountMin, amountMax } = state.range;
+    if (dateFrom && rec.fecha && rec.fecha < dateFrom) return false;
+    if (dateTo && rec.fecha && rec.fecha > dateTo) return false;
+    if (amountMin !== null && rec.valor < amountMin) return false;
+    if (amountMax !== null && rec.valor > amountMax) return false;
+    return true;
+  }
 
   function matchesSearch(text){
     if (!state.search) return true;
@@ -1438,15 +1764,22 @@
     renderTable(state.activeTab);
   }
 
-  function handleDiscardClick(btn){
+  async function handleDiscardClick(btn){
     const side = btn.dataset.side;
     const key = decodeURIComponent(btn.dataset.key);
     const r = currentResults();
     if (!r) return;
     const rec = findRecordByKey(side==='A' ? r.onlyA : r.onlyB, key);
     if (!rec) return;
-    const reason = window.prompt('Motivo (opcional) por el que este documento no tendrá contraparte — ej. "Nota crédito interna, no aplica cruce":', '');
-    if (reason === null) return; // el usuario canceló el prompt
+    const reason = await showModal({
+      title: 'Descartar documento',
+      message: 'Motivo (opcional) por el que este documento no tendrá contraparte — ej. "Nota crédito interna, no aplica cruce".',
+      showInput: true,
+      inputPlaceholder: 'Motivo (opcional)',
+      confirmText: 'Descartar',
+      cancelText: 'Cancelar'
+    });
+    if (reason === null) return; // el usuario canceló el modal
     const concNum = state.activeConc;
     state.manual[concNum].discards.push({ side, key, reason: reason.trim() });
     if (state.manualSelect[side] === key) state.manualSelect[side] = null;
@@ -1460,6 +1793,33 @@
     const concNum = state.activeConc;
     const m = state.manual[concNum];
     m.discards = m.discards.filter(d => !(d.side===side && d.key===key));
+    runReconcile();
+    renderResults(false);
+  }
+
+  // Anotar/editar una nota manual sobre una diferencia de valor (ej. "aprobado
+  // por tesorería, corresponde a retención en la fuente"). A diferencia de
+  // "Justificar" (que descarta un documento sin contraparte), esto no mueve
+  // el documento de pestaña: solo queda como comentario visible junto a la
+  // diferencia, y viaja al Excel exportado.
+  async function handleNoteClick(btn){
+    const key = decodeURIComponent(btn.dataset.key);
+    const concNum = state.activeConc;
+    const m = state.manual[concNum];
+    const existing = m.valueNotes.find(vn => vn.key === key);
+    const note = await showModal({
+      title: 'Anotar diferencia',
+      message: 'Deja una nota sobre por qué esta diferencia de valor es aceptable (ej. "corresponde a retención en la fuente, revisado y aprobado").',
+      showInput: true,
+      inputValue: existing ? existing.note : '',
+      inputPlaceholder: 'Nota (déjala vacía para quitarla)',
+      confirmText: existing ? 'Guardar' : 'Agregar nota',
+      cancelText: 'Cancelar'
+    });
+    if (note === null) return; // el usuario canceló el modal
+    const trimmed = note.trim();
+    m.valueNotes = m.valueNotes.filter(vn => vn.key !== key);
+    if (trimmed) m.valueNotes.push({ key, note: trimmed });
     runReconcile();
     renderResults(false);
   }
@@ -1488,12 +1848,14 @@
     if (discardBtn){ handleDiscardClick(discardBtn); return; }
     const undoBtn = e.target.closest('.undo-discard-btn');
     if (undoBtn){ handleUndoDiscard(undoBtn); return; }
+    const noteBtn = e.target.closest('.note-btn, .note-edit-btn');
+    if (noteBtn){ handleNoteClick(noteBtn); return; }
   });
 
   // Botón pequeño para copiar el número de documento al portapapeles (útil para
   // buscar esa factura en Siesa sin transcribirla a mano).
   function docCopyBtn(doc){
-    return '<button class="copy-btn" type="button" data-doc="'+escAttr(doc)+'" title="Copiar documento">⧉</button>';
+    return '<button class="copy-btn" type="button" data-doc="'+escAttr(doc)+'" title="Copiar documento" aria-label="Copiar número de documento">⧉</button>';
   }
 
   // Celda de Documento: muestra el documento del Lado A y del Lado B apilados,
@@ -1547,6 +1909,9 @@
     });
   }
 
+  // =====================================================================
+  // RENDERIZADO DE RESULTADOS (tabla, pestañas, totales)
+  // =====================================================================
   function renderTable(tab){
     state.activeTab = tab;
     const r = currentResults();
@@ -1562,7 +1927,7 @@
       // Documento y Descripción se muestran apilados (Lado A / Lado B con
       // viñeta de color); Fecha y Valor se muestran una sola vez porque, al
       // estar conciliados, coinciden entre ambos lados.
-      let list = r.ok.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc));
+      let list = r.ok.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc) && matchesRange(a));
       list = applySort(list, x=>x.a.fecha, x=>x.a.valor);
       head = '<thead><tr><th>Documento</th>'+sortHeader('fecha','Fecha')+sortHeader('valor','Valor')
         +'<th>Descripción</th><th>Sucursal</th><th>Estado</th></tr></thead>';
@@ -1582,28 +1947,32 @@
       // apilados. Como aquí el valor (y a veces la fecha) sí difieren, se
       // muestran ambos lados juntos separados por "/" para poder compararlos
       // de un vistazo. La columna Diferencia trae el monto y el motivo.
-      let list = r.diff.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc));
+      let list = r.diff.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc) && matchesRange(a));
       list = applySort(list, x=>x.a.fecha, x=>x.a.valor);
       head = '<thead><tr><th>Documento</th>'+sortHeader('fecha','Fecha')+sortHeader('valor','Valor')
         +'<th>Descripción</th><th>Sucursal</th><th class="diff-col">Diferencia</th></tr></thead>';
       if (list.length === 0) rows = '<tr class="empty-row"><td colspan="6">No se encontraron diferencias entre documentos conciliados.</td></tr>';
-      list.forEach(({a,b,reasons,notes}) => {
+      list.forEach(({a,b,reasons,notes,note}) => {
         const dv = a.valor - b.valor;
+        const noteKey = escAttr(encodeURIComponent(recKey(a)));
+        const noteHtml = note
+          ? '<div class="manual-note">📝 '+escAttr(note)+' <button class="note-edit-btn" type="button" data-key="'+noteKey+'" title="Editar nota">✎</button></div>'
+          : '<button class="mini-btn note-btn" type="button" data-key="'+noteKey+'">+ Nota</button>';
         rows += '<tr>'
           +'<td>'+docPairHtml(a,b)+'</td>'
           +'<td>'+fmtDate(a.fecha)+' / '+fmtDate(b.fecha)+'</td>'
           +'<td class="num">'+fmtMoney(a.valor)+' / '+fmtMoney(b.valor)+'</td>'
           +'<td>'+descPairHtml(a,b)+'</td>'
           +'<td>'+sucBadge(a)+'</td>'
-          +'<td class="diff-cell'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'<div class="diff-note">'+reasons.join(', ')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div></td>'
+          +'<td class="diff-cell'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'<div class="diff-note">'+reasons.join(', ')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>'+noteHtml+'</td>'
           +'</tr>';
       });
     } else if (tab === 'comparativa'){
       // Vista comparativa: junta conciliados + diferencias en una sola tabla
       // lado a lado, con columna de Diferencia y estado de cada documento.
       const combined = r.ok.map(x => ({a:x.a, b:x.b, notes:x.notes, kind:'ok'}))
-        .concat(r.diff.map(x => ({a:x.a, b:x.b, notes:x.notes, reasons:x.reasons, kind:'diff'})));
-      let list = combined.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc));
+        .concat(r.diff.map(x => ({a:x.a, b:x.b, notes:x.notes, reasons:x.reasons, note:x.note, kind:'diff'})));
+      let list = combined.filter(({a,b}) => matchesSearch(a.doc+' '+b.doc+' '+a.desc+' '+b.desc) && matchesRange(a));
       list = applySort(list, x=>x.a.fecha, x=>x.a.valor);
       head = '<thead>'
         +'<tr><th class="grp grp-a" colspan="4">Lado A &middot; '+r.labelA+'</th>'
@@ -1615,11 +1984,15 @@
           +'<th>Documento</th><th>Fecha</th><th>Descripción</th><th>Valor</th></tr>'
         +'</thead>';
       if (list.length === 0) rows = '<tr class="empty-row"><td colspan="11">Sin resultados para este filtro.</td></tr>';
-      list.forEach(({a,b,notes,reasons,kind}) => {
+      list.forEach(({a,b,notes,reasons,note,kind}) => {
         const dv = a.valor - b.valor;
+        const noteKey = escAttr(encodeURIComponent(recKey(a)));
+        const noteHtml = kind !== 'diff' ? '' : (note
+          ? '<div class="manual-note">📝 '+escAttr(note)+' <button class="note-edit-btn" type="button" data-key="'+noteKey+'" title="Editar nota">✎</button></div>'
+          : '<button class="mini-btn note-btn" type="button" data-key="'+noteKey+'">+ Nota</button>');
         const estado = kind === 'ok'
           ? pillFor('ok')+(notes&&notes.length? '<div class="diff-note" style="color:#9AA5B1">'+notes.join(', ')+'</div>':'')
-          : pillFor('diff')+'<div class="diff-note">'+(reasons?reasons.join(', '):'')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>';
+          : pillFor('diff')+'<div class="diff-note">'+(reasons?reasons.join(', '):'')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>'+noteHtml;
         rows += '<tr>'
           +'<td class="mono cmp-a">'+a.doc+docCopyBtn(a.doc)+'</td><td>'+fmtDate(a.fecha)+'</td><td>'+(a.desc||'—')+'</td><td class="num">'+fmtMoney(a.valor)+'</td>'
           +'<td class="diff-cell cmp-diff'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'</td>'
@@ -1631,7 +2004,7 @@
     } else if (tab === 'onlycxc' || tab === 'onlycxp'){
       const side = tab === 'onlycxc' ? 'A' : 'B';
       const list0 = tab === 'onlycxc' ? r.onlyA : r.onlyB;
-      let list = list0.filter(a => matchesSearch(a.doc+' '+a.desc));
+      let list = list0.filter(a => matchesSearch(a.doc+' '+a.desc) && matchesRange(a));
       list = applySort(list, x=>x.fecha, x=>x.valor);
       head = '<thead><tr><th>Documento</th>'+sortHeader('fecha','Fecha')+sortHeader('valor','Valor')+'<th>Descripción</th><th>Sucursal</th><th>Acciones</th></tr></thead>';
       if (list.length === 0) rows = '<tr class="empty-row"><td colspan="6">Todos los documentos de este archivo tienen contraparte.</td></tr>';
@@ -1735,16 +2108,25 @@
 
     if (resetTab){
       state.activeTab = 'ok';
-      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab==='ok'));
+      document.querySelectorAll('.tab').forEach(t => {
+        const isActive = t.dataset.tab==='ok';
+        t.classList.toggle('active', isActive);
+        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
     }
     renderTable(state.activeTab);
   }
 
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
       tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
       renderTable(tab.dataset.tab);
+    });
+    // role="tab" en un <div> necesita este soporte manual de teclado.
+    tab.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); tab.click(); }
     });
   });
 
@@ -1927,6 +2309,9 @@
     ws.views = [{ state:'frozen', ySplit:3 }];
   }
 
+  // =====================================================================
+  // EXPORTACIÓN A EXCEL (ExcelJS)
+  // =====================================================================
   async function buildWorkbook(r){
     const labelA = r.labelA, labelB = r.labelB;
     const wb = new ExcelJS.Workbook();
@@ -1940,7 +2325,7 @@
     const diffRows = sortForComparison(r.diff.map(x=>x.a)).map(a => {
       const match = r.diff.find(x => x.a === a);
       return { a, b: match.b, diff: a.valor - match.b.valor,
-        extra: [match.reasons.join(' · '), (match.notes && match.notes.length) ? match.notes.join(' · ') : ''] };
+        extra: [match.reasons.join(' · '), (match.notes && match.notes.length) ? match.notes.join(' · ') : '', match.note || ''] };
     });
 
     const wsOk = wb.addWorksheet('Conciliados');
@@ -1952,7 +2337,7 @@
 
     const wsDiff = wb.addWorksheet('Diferencias');
     if (diffRows.length) {
-      writeComparativeSheet(wsDiff, { titleA: labelA, titleB: labelB, rows: diffRows, extraHeaders: ['Motivo', 'Notas del cruce'] });
+      writeComparativeSheet(wsDiff, { titleA: labelA, titleB: labelB, rows: diffRows, extraHeaders: ['Motivo', 'Notas del cruce', 'Nota manual'] });
     } else {
       wsDiff.getCell('A1').value = 'Sin partidas en esta categoría';
     }
@@ -1974,17 +2359,22 @@
       .replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'') || 'archivo';
   }
 
-  async function downloadWorkbookFor(concNum){
-    const r = state.conc[concNum];
+  async function downloadWorkbookForResult(r, concLabel){
     if (!r) return;
     const wb = await buildWorkbook(r);
     const buf = await wb.xlsx.writeBuffer();
     const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = 'conciliacion_'+concNum+'_'+slug(r.labelA)+'_vs_'+slug(r.labelB)+'.xlsx';
+    a.href = url; a.download = 'conciliacion_'+concLabel+'_'+slug(r.labelA)+'_vs_'+slug(r.labelB)+'.xlsx';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  async function downloadWorkbookFor(concNum){
+    const r = state.conc[concNum];
+    if (!r) return;
+    await downloadWorkbookForResult(r, String(concNum));
   }
 
   document.getElementById('btn-export').addEventListener('click', async () => {
