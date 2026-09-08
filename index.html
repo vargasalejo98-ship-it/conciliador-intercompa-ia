@@ -958,6 +958,20 @@
     }
   };
 
+  // Normaliza el valor crudo de la celda de Documento a un string limpio, sin
+  // espacios internos. Siesa a veces exporta el tipo de comprobante con
+  // relleno de espacios para que quede de ancho fijo (ej. "101-NI -00016320-000",
+  // "101-DC -00048519-000", "101-NB -00033067-000"): ese espacio hacía que el
+  // docPattern (que no admite espacios dentro de cada segmento) rechazara la
+  // fila entera y el documento se perdiera del conteo, aunque sí era una
+  // factura válida. Quitando todo el espacio en blanco (no solo los extremos)
+  // antes de validar/usar el valor, esos documentos se reconocen igual.
+  function cleanDocString(raw){
+    if (typeof raw === 'string') return raw.trim().replace(/\s+/g, '');
+    if (typeof raw === 'number') return String(raw);
+    return '';
+  }
+
   function findColumnByAliases(row, aliases){
     if (!row) return -1;
     for (let i=0; i<row.length; i++){
@@ -1002,7 +1016,7 @@
       const docCol = siesaHeader.docCol;
       const pattern = FORMATS.siesa.docPattern;
       for (let i = siesaHeader.headerRowIdx + 1; i < Math.min(siesaHeader.headerRowIdx + 20, aoa.length); i++) {
-        const val = String(aoa[i][docCol] || '');
+        const val = cleanDocString(aoa[i][docCol]);
         if (val && pattern.test(val)) return 'siesa';
       }
     }
@@ -1164,8 +1178,7 @@
 
     for (let i = headerRowIdx+1; i < aoa.length; i++){
       const row = aoa[i]; if (!row) continue;
-      const rawDoc = row[docCol];
-      const doc = (typeof rawDoc === 'string') ? rawDoc.trim() : (typeof rawDoc === 'number' ? String(rawDoc) : '');
+      const doc = cleanDocString(row[docCol]);
       const fecha = parseDateCell(row[fechaCol]);
 
       if (doc && (fmt.docPattern.test(doc) || formatKey !== 'siesa') && fecha){
