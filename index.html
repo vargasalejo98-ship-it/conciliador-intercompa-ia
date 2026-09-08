@@ -327,6 +327,7 @@
   .brand-footer .fl-mark{width:52px;height:52px;border-radius:12px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;position:relative;z-index:1;box-shadow:0 3px 10px rgba(0,0,0,.25);overflow:hidden;padding:4px;}
   .brand-footer .fl-mark img{width:100%;height:100%;object-fit:contain;display:block;}
   .brand-footer .fl-text{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);position:relative;z-index:1;}
+  .brand-footer .fl-credit{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;color:#9AA5B1;position:relative;z-index:1;margin-top:2px;}
 </style>
 </head>
 <body>
@@ -559,6 +560,7 @@
 
   <div class="brand-footer">
     <div class="fl-mark"><img src="data:image/jpeg;base64,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" alt="El Templo de la Moda"></div>
+    <div class="fl-credit">Desarrollado por Alejandro Vargas · TDM</div>
   </div>
 
   <div class="modal-backdrop" id="modal-backdrop">
@@ -871,7 +873,7 @@
         }
         return null;
       },
-      docPattern: /^\d{2,3}-[A-Za-z0-9]+\s*-\d+(-\d+)?$/,
+      docPattern: /^\d{2,3}(-[A-Za-z0-9]+)+$/,
       colAliases: {
         Documento: ['Documento'],
         Fecha: ['Fecha'],
@@ -907,7 +909,7 @@
         }
         return null;
       },
-      docPattern: /^\d{2,3}-[A-Za-z0-9]+\s*-\d+(-\d+)?$/,
+      docPattern: /^\d{2,3}(-[A-Za-z0-9]+)+$/,
       colAliases: {
         Documento: ['Nro. Documento', 'Nro Documento', 'Documento', 'Factura', 'Nro. Factura'],
         Fecha: ['Fecha', 'Fecha factura', 'Fecha documento', 'Fecha Emisión'],
@@ -943,7 +945,7 @@
         }
         return null;
       },
-      docPattern: /^\d{2,3}-[A-Za-z0-9]+\s*-\d+(-\d+)?$/,
+      docPattern: /^\d{2,3}(-[A-Za-z0-9]+)+$/,
       colAliases: {
         Documento: ['Documento', 'Factura', 'Nro. Documento', 'Referencia'],
         Fecha: ['Fecha', 'Emisión'],
