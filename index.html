@@ -66,24 +66,6 @@
   .meta-block{grid-column:3;justify-self:end;text-align:right;}
   .meta-credit{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8FA0B8;white-space:nowrap;margin-bottom:2px;}
   .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8FA0B8;text-align:right;white-space:nowrap;}
-  .btn-logout{margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B7C1D1;background:none;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 11px;cursor:pointer;transition:border-color .15s,color .15s;}
-  .btn-logout:hover{border-color:#fff;color:#fff;}
-
-  .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;
-    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);}
-  .auth-gate:not(.show){display:none;}
-  body.auth-locked{overflow:hidden;}
-  .auth-card{width:min(380px,100%);background:#fff;border-radius:14px;border-top:3px solid var(--gold-line);box-shadow:0 30px 70px rgba(0,0,0,.5);padding:32px 28px;animation:authPop .22s cubic-bezier(.2,.8,.3,1) both;}
-  @keyframes authPop{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
-  .auth-card h2{font-family:'Inter',sans-serif;font-weight:800;font-size:18px;color:var(--ink);margin:0 0 4px;}
-  .auth-card .auth-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin:0 0 22px;letter-spacing:.02em;}
-  .auth-field{margin-bottom:14px;}
-  .auth-field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:5px;}
-  .auth-field input{width:100%;font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box;color:var(--ink);}
-  .auth-field input:focus{outline:none;border-color:var(--gold-line);}
-  .auth-error{font-family:'Inter',sans-serif;font-size:12.5px;color:var(--gold-line);min-height:16px;margin:-2px 0 12px;}
-  .auth-submit{width:100%;font-family:'Inter',sans-serif;font-weight:700;font-size:14px;padding:11px;border:none;border-radius:8px;background:var(--gold-line);color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(200,19,40,.28);transition:background .15s,transform .15s;}
-  .auth-submit:hover{background:var(--burgundy);transform:translateY(-1px);}
 
   .info-btn{width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#C9D2DF;font-family:'IBM Plex Mono',monospace;font-size:11.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s,transform .15s;}
   .info-btn:hover{background:rgba(216,27,45,.3);border-color:var(--gold-line);color:#fff;transform:scale(1.06);}
@@ -355,39 +337,6 @@
 </head>
 <body>
 
-<!--
-  Pantalla de acceso — IMPORTANTE:
-  Esto NO es seguridad real. Es un archivo HTML que corre por completo en el
-  navegador de quien lo abre: cualquiera con conocimientos básicos puede ver
-  estas contraseñas abriendo "Ver código fuente" o las herramientas de
-  desarrollador, o saltarse esta pantalla desde la consola. Sirve solo como
-  un filtro simple para que la app no quede abierta a cualquiera que llegue
-  al link por accidente.
-
-  Para proteger datos realmente sensibles, usa el control de acceso del
-  hosting donde subas este archivo (ej. "Password Protection" de Netlify, o
-  autenticación básica en el servidor) — eso sí bloquea el acceso antes de
-  que el navegador reciba este HTML.
-
-  Para agregar o cambiar usuarios, edita la lista AUTH_USERS más abajo, en
-  el bloque de JavaScript principal.
--->
-<div class="auth-gate show" id="auth-gate">
-  <form class="auth-card" id="auth-form" autocomplete="off">
-    <h2>Conciliador intercompañía</h2>
-    <p class="auth-sub">Ingresa tu usuario y contraseña para continuar</p>
-    <div class="auth-field">
-      <label for="auth-user">Usuario</label>
-      <input type="text" id="auth-user" autocomplete="username" required>
-    </div>
-    <div class="auth-field">
-      <label for="auth-pass">Contraseña</label>
-      <input type="password" id="auth-pass" autocomplete="current-password" required>
-    </div>
-    <div class="auth-error" id="auth-error"></div>
-    <button type="submit" class="auth-submit">Ingresar</button>
-  </form>
-</div>
 
 <header class="top">
   <div class="inner">
@@ -404,7 +353,6 @@
     <div class="meta-block">
       <div class="meta-credit">By Alejandro Vargas · TDM</div>
       <div class="meta" id="header-meta"></div>
-      <button type="button" class="btn-logout" id="btn-logout" title="Cerrar sesión">Cerrar sesión</button>
     </div>
   </div>
   <div class="info-panel" id="info-panel">
@@ -640,72 +588,6 @@
 
 <script>
 (function(){
-  // =====================================================================
-  // ACCESO (usuario/contraseña) — filtro simple, NO es seguridad real
-  // =====================================================================
-  // Esta lista vive en el propio archivo HTML, así que cualquiera con las
-  // herramientas de desarrollador del navegador puede leerla. Sirve para
-  // evitar que alguien entre por accidente al link, no para proteger datos
-  // frente a alguien que de verdad quiera entrar sin permiso. Para eso,
-  // usa el control de acceso del hosting (ver comentario al inicio del
-  // <body>).
-  //
-  // Para agregar, quitar o cambiar una clave, edita esta lista:
-  const AUTH_USERS = [
-    { user: 'contabilidad', pass: 'CAMBIA-ESTA-CLAVE' },
-  ];
-
-  const AUTH_SESSION_KEY = 'conciliador_auth_ok';
-
-  function isAuthenticated(){
-    try { return sessionStorage.getItem(AUTH_SESSION_KEY) === '1'; }
-    catch(e) { return false; } // si el navegador bloquea sessionStorage, no se recuerda entre recargas
-  }
-
-  function showAuthGate(){
-    document.body.classList.add('auth-locked');
-    document.getElementById('auth-gate').classList.add('show');
-    const userInput = document.getElementById('auth-user');
-    document.getElementById('auth-pass').value = '';
-    document.getElementById('auth-error').textContent = '';
-    setTimeout(() => userInput.focus(), 50);
-  }
-
-  function hideAuthGate(){
-    try { sessionStorage.setItem(AUTH_SESSION_KEY, '1'); } catch(e) {}
-    document.body.classList.remove('auth-locked');
-    document.getElementById('auth-gate').classList.remove('show');
-  }
-
-  function initAuth(){
-    if (isAuthenticated()) {
-      document.getElementById('auth-gate').classList.remove('show');
-    } else {
-      showAuthGate();
-    }
-
-    document.getElementById('auth-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      const u = document.getElementById('auth-user').value.trim();
-      const p = document.getElementById('auth-pass').value;
-      const match = AUTH_USERS.find(x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p);
-      if (match) {
-        hideAuthGate();
-      } else {
-        document.getElementById('auth-error').textContent = 'Usuario o contraseña incorrectos.';
-        document.getElementById('auth-pass').value = '';
-        document.getElementById('auth-pass').focus();
-      }
-    });
-
-    document.getElementById('btn-logout').addEventListener('click', () => {
-      try { sessionStorage.removeItem(AUTH_SESSION_KEY); } catch(e) {}
-      showAuthGate();
-    });
-  }
-
-  initAuth();
-
   // =====================================================================
   // ESTADO GLOBAL
   // =====================================================================
