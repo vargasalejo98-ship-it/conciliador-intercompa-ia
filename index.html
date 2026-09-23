@@ -66,6 +66,24 @@
   .meta-block{grid-column:3;justify-self:end;text-align:right;}
   .meta-credit{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8FA0B8;white-space:nowrap;margin-bottom:2px;}
   .meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#8FA0B8;text-align:right;white-space:nowrap;}
+  .btn-logout{margin-top:6px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#B7C1D1;background:none;border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 11px;cursor:pointer;transition:border-color .15s,color .15s;}
+  .btn-logout:hover{border-color:#fff;color:#fff;}
+
+  .auth-gate{display:flex;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;padding:20px;
+    background:linear-gradient(180deg,var(--navy) 0%,var(--navy-2) 100%);}
+  .auth-gate:not(.show){display:none;}
+  body.auth-locked{overflow:hidden;}
+  .auth-card{width:min(380px,100%);background:#fff;border-radius:14px;border-top:3px solid var(--gold-line);box-shadow:0 30px 70px rgba(0,0,0,.5);padding:32px 28px;animation:authPop .22s cubic-bezier(.2,.8,.3,1) both;}
+  @keyframes authPop{from{opacity:0;transform:scale(.96);}to{opacity:1;transform:scale(1);}}
+  .auth-card h2{font-family:'Inter',sans-serif;font-weight:800;font-size:18px;color:var(--ink);margin:0 0 4px;}
+  .auth-card .auth-sub{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-soft);margin:0 0 22px;letter-spacing:.02em;}
+  .auth-field{margin-bottom:14px;}
+  .auth-field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;color:var(--ink-soft);letter-spacing:.05em;margin-bottom:5px;}
+  .auth-field input{width:100%;font-family:'Inter',sans-serif;font-size:14px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;box-sizing:border-box;color:var(--ink);}
+  .auth-field input:focus{outline:none;border-color:var(--gold-line);}
+  .auth-error{font-family:'Inter',sans-serif;font-size:12.5px;color:var(--gold-line);min-height:16px;margin:-2px 0 12px;}
+  .auth-submit{width:100%;font-family:'Inter',sans-serif;font-weight:700;font-size:14px;padding:11px;border:none;border-radius:8px;background:var(--gold-line);color:#fff;cursor:pointer;box-shadow:0 3px 10px rgba(200,19,40,.28);transition:background .15s,transform .15s;}
+  .auth-submit:hover{background:var(--burgundy);transform:translateY(-1px);}
 
   .info-btn{width:22px;height:22px;border-radius:50%;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.06);color:#C9D2DF;font-family:'IBM Plex Mono',monospace;font-size:11.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,border-color .15s,transform .15s;}
   .info-btn:hover{background:rgba(216,27,45,.3);border-color:var(--gold-line);color:#fff;transform:scale(1.06);}
@@ -247,7 +265,10 @@
   .manual-match-bar{display:none;align-items:center;gap:14px;background:var(--navy);color:#fff;border-radius:9px;padding:12px 16px;margin-top:14px;flex-wrap:wrap;box-shadow:0 4px 14px rgba(0,0,0,.25);}
   .manual-match-bar .mm-side{font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:#C9D2DF;background:rgba(255,255,255,.06);padding:7px 12px;border-radius:6px;flex:1;min-width:180px;}
   .manual-match-bar .mm-side b{color:#fff;}
-  .manual-match-bar .mm-x{font-weight:700;color:var(--gold-line);}
+  .manual-match-bar .mm-subtotal{margin-top:4px;padding-top:4px;border-top:1px dashed rgba(255,255,255,.2);color:#fff;font-weight:600;}
+  .manual-match-bar .mm-x{font-weight:700;color:var(--gold-line);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:70px;text-align:center;}
+  .manual-match-bar .mm-delta{font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap;}
+  .manual-match-bar .mm-delta.ok{color:var(--green);}
   .manual-match-bar .mm-actions{display:flex;gap:8px;margin-left:auto;}
   .manual-match-bar .mini-btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff;}
   .manual-match-bar .mini-btn:hover{border-color:var(--gold-line);}
@@ -333,6 +354,41 @@
 </style>
 </head>
 <body>
+
+<!--
+  Pantalla de acceso — IMPORTANTE:
+  Esto NO es seguridad real. Es un archivo HTML que corre por completo en el
+  navegador de quien lo abre: cualquiera con conocimientos básicos puede ver
+  estas contraseñas abriendo "Ver código fuente" o las herramientas de
+  desarrollador, o saltarse esta pantalla desde la consola. Sirve solo como
+  un filtro simple para que la app no quede abierta a cualquiera que llegue
+  al link por accidente.
+
+  Para proteger datos realmente sensibles, usa el control de acceso del
+  hosting donde subas este archivo (ej. "Password Protection" de Netlify, o
+  autenticación básica en el servidor) — eso sí bloquea el acceso antes de
+  que el navegador reciba este HTML.
+
+  Para agregar o cambiar usuarios, edita la lista AUTH_USERS más abajo, en
+  el bloque de JavaScript principal.
+-->
+<div class="auth-gate show" id="auth-gate">
+  <form class="auth-card" id="auth-form" autocomplete="off">
+    <h2>Conciliador intercompañía</h2>
+    <p class="auth-sub">Ingresa tu usuario y contraseña para continuar</p>
+    <div class="auth-field">
+      <label for="auth-user">Usuario</label>
+      <input type="text" id="auth-user" autocomplete="username" required>
+    </div>
+    <div class="auth-field">
+      <label for="auth-pass">Contraseña</label>
+      <input type="password" id="auth-pass" autocomplete="current-password" required>
+    </div>
+    <div class="auth-error" id="auth-error"></div>
+    <button type="submit" class="auth-submit">Ingresar</button>
+  </form>
+</div>
+
 <header class="top">
   <div class="inner">
     <div class="titles">
@@ -348,6 +404,7 @@
     <div class="meta-block">
       <div class="meta-credit">By Alejandro Vargas · TDM</div>
       <div class="meta" id="header-meta"></div>
+      <button type="button" class="btn-logout" id="btn-logout" title="Cerrar sesión">Cerrar sesión</button>
     </div>
   </div>
   <div class="info-panel" id="info-panel">
@@ -584,11 +641,77 @@
 <script>
 (function(){
   // =====================================================================
+  // ACCESO (usuario/contraseña) — filtro simple, NO es seguridad real
+  // =====================================================================
+  // Esta lista vive en el propio archivo HTML, así que cualquiera con las
+  // herramientas de desarrollador del navegador puede leerla. Sirve para
+  // evitar que alguien entre por accidente al link, no para proteger datos
+  // frente a alguien que de verdad quiera entrar sin permiso. Para eso,
+  // usa el control de acceso del hosting (ver comentario al inicio del
+  // <body>).
+  //
+  // Para agregar, quitar o cambiar una clave, edita esta lista:
+  const AUTH_USERS = [
+    { user: 'contabilidad', pass: 'CAMBIA-ESTA-CLAVE' },
+  ];
+
+  const AUTH_SESSION_KEY = 'conciliador_auth_ok';
+
+  function isAuthenticated(){
+    try { return sessionStorage.getItem(AUTH_SESSION_KEY) === '1'; }
+    catch(e) { return false; } // si el navegador bloquea sessionStorage, no se recuerda entre recargas
+  }
+
+  function showAuthGate(){
+    document.body.classList.add('auth-locked');
+    document.getElementById('auth-gate').classList.add('show');
+    const userInput = document.getElementById('auth-user');
+    document.getElementById('auth-pass').value = '';
+    document.getElementById('auth-error').textContent = '';
+    setTimeout(() => userInput.focus(), 50);
+  }
+
+  function hideAuthGate(){
+    try { sessionStorage.setItem(AUTH_SESSION_KEY, '1'); } catch(e) {}
+    document.body.classList.remove('auth-locked');
+    document.getElementById('auth-gate').classList.remove('show');
+  }
+
+  function initAuth(){
+    if (isAuthenticated()) {
+      document.getElementById('auth-gate').classList.remove('show');
+    } else {
+      showAuthGate();
+    }
+
+    document.getElementById('auth-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const u = document.getElementById('auth-user').value.trim();
+      const p = document.getElementById('auth-pass').value;
+      const match = AUTH_USERS.find(x => x.user.toLowerCase() === u.toLowerCase() && x.pass === p);
+      if (match) {
+        hideAuthGate();
+      } else {
+        document.getElementById('auth-error').textContent = 'Usuario o contraseña incorrectos.';
+        document.getElementById('auth-pass').value = '';
+        document.getElementById('auth-pass').focus();
+      }
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      try { sessionStorage.removeItem(AUTH_SESSION_KEY); } catch(e) {}
+      showAuthGate();
+    });
+  }
+
+  initAuth();
+
+  // =====================================================================
   // ESTADO GLOBAL
   // =====================================================================
   const state = { files: { e1cxc:null, e1cxp:null, e2cxc:null, e2cxp:null }, format: { 1: 'siesa', 2: 'siesa' }, conc: { 1: null, 2: null }, activeConc: 1, sucFilter: 'ALL', search: '', activeTab: 'ok', sort: {},
     range: { dateFrom: null, dateTo: null, amountMin: null, amountMax: null },
-    manual: { 1: { matches: [], discards: [], valueNotes: [] }, 2: { matches: [], discards: [], valueNotes: [] } }, manualSelect: { A: null, B: null } };
+    manual: { 1: { matches: [], discards: [], valueNotes: [] }, 2: { matches: [], discards: [], valueNotes: [] } }, manualSelect: { A: [], B: [] } };
 
   const HISTORY_KEY = 'conciliador_historial_v1';
   const HISTORY_MAX_ENTRIES = 5; // antes 10: cada entrada ahora guarda los registros completos (ver toExportableResult), así que reducimos la cantidad para no agotar la cuota de localStorage.
@@ -1047,7 +1170,7 @@
 
   function clearManualState(){
     state.manual = { 1: { matches: [], discards: [], valueNotes: [] }, 2: { matches: [], discards: [], valueNotes: [] } };
-    state.manualSelect = { A: null, B: null };
+    state.manualSelect = { A: [], B: [] };
   }
 
   function escAttr(s){
@@ -1677,6 +1800,24 @@
   // contraparte) que el usuario haya hecho para esta conciliación. Se reaplica
   // cada vez que se recalcula (ej. al cambiar el filtro de sucursal) porque
   // reconcile() siempre parte de cero.
+  // Combina 1 o 2 registros del mismo lado, ya emparejados manualmente, en un
+  // único registro "resumen" con el mismo formato que usa el resto de la app
+  // (doc/fecha/valor/desc/sucursal), para poder reutilizar tal cual toda la
+  // tabla, el Excel exportado, etc. sin tener que enseñarles a manejar grupos.
+  function mergeManualGroup(records){
+    if (records.length === 1) return records[0];
+    const sorted = records.slice().sort((x,y) => x.fecha - y.fecha);
+    return {
+      doc: records.map(r => r.doc).join(' + '),
+      fecha: sorted[0].fecha,
+      valor: records.reduce((s,r) => s + r.valor, 0),
+      desc: '('+records.length+' documentos) ' + records.map(r => r.desc || r.doc).join(' · '),
+      sucursal: records[0].sucursal,
+      categoria: records[0].categoria,
+      invoiceNum: records[0].invoiceNum,
+    };
+  }
+
   function applyManualOverrides(concNum, result){
     const m = state.manual[concNum];
     if (!m) return result;
@@ -1689,14 +1830,30 @@
     result.onlyB = result.onlyB.filter(r => !discardKeysB.has(recKey(r)));
 
     m.matches.forEach(match => {
-      const idxA = result.onlyA.findIndex(r => recKey(r) === match.keyA);
-      const idxB = result.onlyB.findIndex(r => recKey(r) === match.keyB);
-      if (idxA === -1 || idxB === -1) return; // uno de los dos no está visible con el filtro actual
-      const a = result.onlyA[idxA], b = result.onlyB[idxB];
-      result.onlyA.splice(idxA,1);
-      result.onlyB.splice(idxB,1);
+      // keysA/keysB (1 o 2 documentos por lado) es el formato actual;
+      // keyA/keyB (un solo documento) es el formato anterior — se sigue
+      // aceptando por si queda algún emparejamiento guardado en el
+      // historial del navegador de antes de este cambio.
+      const keysA = match.keysA || (match.keyA ? [match.keyA] : []);
+      const keysB = match.keysB || (match.keyB ? [match.keyB] : []);
+      if (!keysA.length || !keysB.length) return;
+
+      const idxsA = keysA.map(k => result.onlyA.findIndex(r => recKey(r) === k)).filter(i => i !== -1);
+      const idxsB = keysB.map(k => result.onlyB.findIndex(r => recKey(r) === k)).filter(i => i !== -1);
+      if (!idxsA.length || !idxsB.length) return; // ninguno de los dos lados está visible con el filtro actual
+
+      const recsA = idxsA.map(i => result.onlyA[i]);
+      const recsB = idxsB.map(i => result.onlyB[i]);
+      // Quitar de mayor a menor índice para no desordenar el array mientras se hace splice.
+      idxsA.slice().sort((x,y)=>y-x).forEach(i => result.onlyA.splice(i,1));
+      idxsB.slice().sort((x,y)=>y-x).forEach(i => result.onlyB.splice(i,1));
+
+      const a = mergeManualGroup(recsA);
+      const b = mergeManualGroup(recsB);
       const diffVal = Math.abs(a.valor - b.valor);
-      const notes = ['emparejado manualmente'];
+      const notes = (recsA.length>1 || recsB.length>1)
+        ? ['emparejamiento manual de '+recsA.length+' + '+recsB.length+' documentos']
+        : ['emparejado manualmente'];
       if (diffVal > 0.005){
         result.diff.push({a,b,reasons:['valor distinto (Δ '+fmtMoney(diffVal)+')'],notes,manual:true});
       } else {
@@ -1781,7 +1938,7 @@
       // Al cambiar de conciliación se conserva la pestaña, la sucursal y la
       // búsqueda activas (resetTab=false); las selecciones de emparejamiento
       // manual sí se limpian porque pertenecen a la conciliación anterior.
-      state.manualSelect = { A:null, B:null };
+      state.manualSelect = { A: [], B: [] };
       renderResults(false);
     });
     // role="button" en un <div> no dispara click() con teclado por sí solo.
@@ -1864,39 +2021,65 @@
   }
 
   // ---- Emparejamiento manual y justificación de pendientes ----
-  // El usuario selecciona una fila en "Solo lado A" y otra en "Solo lado B"
-  // (los botones "Emparejar" de cada tabla); la barra flotante muestra la
-  // selección y permite confirmar. "Justificar" saca un pendiente del conteo
-  // sin necesidad de emparejarlo con nada (ej. una nota crédito interna).
+  // El usuario selecciona 1 o 2 filas en "Solo lado A" y 1 o 2 en "Solo lado
+  // B" (los botones "Emparejar" de cada tabla); la barra flotante muestra la
+  // selección, la suma de cada lado y la diferencia entre ambas sumas antes
+  // de confirmar. Sirve para casos como una factura que en un sistema quedó
+  // partida en dos documentos y en el otro en uno solo. "Justificar" saca un
+  // pendiente del conteo sin necesidad de emparejarlo con nada (ej. una nota
+  // crédito interna).
+  const MANUAL_MATCH_MAX_PER_SIDE = 2;
+
+  function manualSelectedRecords(side){
+    const r = currentResults();
+    if (!r) return [];
+    const list = side === 'A' ? r.onlyA : r.onlyB;
+    return state.manualSelect[side].map(k => findRecordByKey(list, k)).filter(Boolean);
+  }
 
   function renderManualBar(){
     const bar = document.getElementById('manual-match-bar');
     const r = currentResults();
-    if (!r || (!state.manualSelect.A && !state.manualSelect.B)){ bar.style.display = 'none'; bar.innerHTML=''; return; }
-    const recA = state.manualSelect.A ? findRecordByKey(r.onlyA, state.manualSelect.A) : null;
-    const recB = state.manualSelect.B ? findRecordByKey(r.onlyB, state.manualSelect.B) : null;
+    const selA = r ? manualSelectedRecords('A') : [];
+    const selB = r ? manualSelectedRecords('B') : [];
+    if (!r || (selA.length === 0 && selB.length === 0)){ bar.style.display = 'none'; bar.innerHTML=''; return; }
+
+    const sideHtml = (recs, emptyLabel) => {
+      if (!recs.length) return emptyLabel;
+      const lines = recs.map(rec => '<div>'+rec.doc+' · '+fmtMoney(rec.valor)+'</div>').join('');
+      const subtotal = recs.length > 1 ? '<div class="mm-subtotal">Suma: '+fmtMoney(sum(recs, x=>x.valor))+'</div>' : '';
+      return lines + subtotal;
+    };
+
     bar.style.display = 'flex';
+    let deltaHtml = '';
+    if (selA.length && selB.length){
+      const delta = sum(selA, x=>x.valor) - sum(selB, x=>x.valor);
+      const balanced = Math.abs(delta) < 0.005;
+      deltaHtml = '<div class="mm-delta'+(balanced?' ok':'')+'">'+(balanced ? '✓ mismas cifras' : 'Δ '+fmtMoney(delta))+'</div>';
+    }
+
     bar.innerHTML =
-      '<div class="mm-side">'+(recA ? ('<b>'+recA.doc+'</b> · '+fmtMoney(recA.valor)) : 'Selecciona una fila en «Solo lado A»')+'</div>'
-      + '<div class="mm-x">×</div>'
-      + '<div class="mm-side">'+(recB ? ('<b>'+recB.doc+'</b> · '+fmtMoney(recB.valor)) : 'Selecciona una fila en «Solo lado B»')+'</div>'
+      '<div class="mm-side">'+sideHtml(selA, 'Selecciona hasta 2 filas en «Solo lado A»')+'</div>'
+      + '<div class="mm-x"><div>×</div>'+deltaHtml+'</div>'
+      + '<div class="mm-side">'+sideHtml(selB, 'Selecciona hasta 2 filas en «Solo lado B»')+'</div>'
       + '<div class="mm-actions">'
-        + '<button class="mini-btn primary-mini" type="button" id="mm-confirm"'+((recA&&recB)?'':' disabled')+'>Confirmar emparejamiento</button>'
+        + '<button class="mini-btn primary-mini" type="button" id="mm-confirm"'+((selA.length&&selB.length)?'':' disabled')+'>Confirmar emparejamiento</button>'
         + '<button class="mini-btn" type="button" id="mm-cancel">Cancelar</button>'
       + '</div>';
     const confirmBtn = document.getElementById('mm-confirm');
     if (confirmBtn) confirmBtn.addEventListener('click', confirmManualMatch);
     document.getElementById('mm-cancel').addEventListener('click', () => {
-      state.manualSelect = { A:null, B:null };
+      state.manualSelect = { A: [], B: [] };
       renderTable(state.activeTab);
     });
   }
 
   function confirmManualMatch(){
-    if (!state.manualSelect.A || !state.manualSelect.B) return;
+    if (!state.manualSelect.A.length || !state.manualSelect.B.length) return;
     const concNum = state.activeConc;
-    state.manual[concNum].matches.push({ keyA: state.manualSelect.A, keyB: state.manualSelect.B });
-    state.manualSelect = { A:null, B:null };
+    state.manual[concNum].matches.push({ keysA: state.manualSelect.A.slice(), keysB: state.manualSelect.B.slice() });
+    state.manualSelect = { A: [], B: [] };
     runReconcile();
     renderResults(false);
   }
@@ -1904,7 +2087,15 @@
   function handleMatchClick(btn){
     const side = btn.dataset.side;
     const key = decodeURIComponent(btn.dataset.key);
-    state.manualSelect[side] = (state.manualSelect[side] === key) ? null : key;
+    const current = state.manualSelect[side];
+    if (current.includes(key)) {
+      state.manualSelect[side] = current.filter(k => k !== key);
+    } else if (current.length >= MANUAL_MATCH_MAX_PER_SIDE) {
+      showError('Ya seleccionaste el máximo de '+MANUAL_MATCH_MAX_PER_SIDE+' documentos de este lado. Deselecciona uno primero (o confirma el emparejamiento actual) para elegir otro.');
+      return;
+    } else {
+      current.push(key);
+    }
     renderTable(state.activeTab);
   }
 
@@ -1926,7 +2117,7 @@
     if (reason === null) return; // el usuario canceló el modal
     const concNum = state.activeConc;
     state.manual[concNum].discards.push({ side, key, reason: reason.trim() });
-    if (state.manualSelect[side] === key) state.manualSelect[side] = null;
+    state.manualSelect[side] = state.manualSelect[side].filter(k => k !== key);
     runReconcile();
     renderResults(false);
   }
@@ -2154,7 +2345,7 @@
       if (list.length === 0) rows = '<tr class="empty-row"><td colspan="6">Todos los documentos de este archivo tienen contraparte.</td></tr>';
       list.forEach(a => {
         const key = recKey(a);
-        const isSelected = state.manualSelect[side] === key;
+        const isSelected = state.manualSelect[side].includes(key);
         rows += '<tr class="'+(isSelected?'row-selected':'')+'">'
           +'<td class="mono">'+a.doc+docCopyBtn(a.doc)+'</td><td>'+fmtDate(a.fecha)+'</td><td class="num">'+fmtMoney(a.valor)+'</td><td>'+(a.desc||'—')+'</td><td>'+sucBadge(a)+'</td>'
           +'<td class="actions-cell">'
