@@ -251,6 +251,10 @@
   .manual-match-bar .mm-x{font-weight:700;color:var(--gold-line);display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:70px;text-align:center;}
   .manual-match-bar .mm-delta{font-family:'IBM Plex Mono',monospace;font-size:11px;white-space:nowrap;}
   .manual-match-bar .mm-delta.ok{color:var(--green);}
+  .manual-match-bar .mm-line{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .manual-match-bar .mm-remove{background:none;border:0;color:#9AA5B1;cursor:pointer;font-size:12px;padding:0 2px;line-height:1;}
+  .manual-match-bar .mm-remove:hover{color:#fff;}
+  .manual-match-bar .mm-side{max-height:180px;overflow-y:auto;}
   .manual-match-bar .mm-actions{display:flex;gap:8px;margin-left:auto;}
   .manual-match-bar .mini-btn{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.25);color:#fff;}
   .manual-match-bar .mini-btn:hover{border-color:var(--gold-line);}
@@ -1682,7 +1686,7 @@
   // contraparte) que el usuario haya hecho para esta conciliación. Se reaplica
   // cada vez que se recalcula (ej. al cambiar el filtro de sucursal) porque
   // reconcile() siempre parte de cero.
-  // Combina 1 o 2 registros del mismo lado, ya emparejados manualmente, en un
+  // Combina 1 o más registros del mismo lado, ya emparejados manualmente, en un
   // único registro "resumen" con el mismo formato que usa el resto de la app
   // (doc/fecha/valor/desc/sucursal), para poder reutilizar tal cual toda la
   // tabla, el Excel exportado, etc. sin tener que enseñarles a manejar grupos.
@@ -1697,7 +1701,41 @@
       sucursal: records[0].sucursal,
       categoria: records[0].categoria,
       invoiceNum: records[0].invoiceNum,
+      // Documentos originales del grupo: permiten volver a abrir un grupo que
+      // quedó con diferencia para sumarle más documentos complementarios.
+      parts: records,
     };
+  }
+
+  // Documentos originales detrás de un registro (él mismo si no es un grupo).
+  function partsOf(rec){ return rec.parts || [rec]; }
+
+  // Busca un registro por llave dentro de "Solo lado X" o dentro de un cruce
+  // con diferencia (automático o manual). Si lo encuentra en un cruce con
+  // diferencia, ese cruce se desarma: el registro se devuelve y su(s)
+  // contraparte(s) vuelve(n) a la lista de pendientes de su lado.
+  function hasRecordForManual(result, side, key){
+    const list = side === 'A' ? result.onlyA : result.onlyB;
+    if (list.some(r => recKey(r) === key)) return true;
+    return result.diff.some(d => partsOf(side === 'A' ? d.a : d.b).some(r => recKey(r) === key));
+  }
+  function takeRecordForManual(result, side, key){
+    const list = side === 'A' ? result.onlyA : result.onlyB;
+    let i = list.findIndex(r => recKey(r) === key);
+    if (i !== -1) return list.splice(i,1)[0];
+    for (let di = 0; di < result.diff.length; di++){
+      const d = result.diff[di];
+      const mine = partsOf(side === 'A' ? d.a : d.b);
+      const found = mine.find(r => recKey(r) === key);
+      if (!found) continue;
+      // Desarmar el cruce: todos los documentos de ambos lados vuelven a pendientes.
+      result.diff.splice(di,1);
+      partsOf(d.a).forEach(r => result.onlyA.push(r));
+      partsOf(d.b).forEach(r => result.onlyB.push(r));
+      i = list.findIndex(r => recKey(r) === key);
+      return list.splice(i,1)[0];
+    }
+    return null;
   }
 
   function applyManualOverrides(concNum, result){
@@ -1712,7 +1750,7 @@
     result.onlyB = result.onlyB.filter(r => !discardKeysB.has(recKey(r)));
 
     m.matches.forEach(match => {
-      // keysA/keysB (1 o 2 documentos por lado) es el formato actual;
+      // keysA/keysB (1 o más documentos por lado) es el formato actual;
       // keyA/keyB (un solo documento) es el formato anterior — se sigue
       // aceptando por si queda algún emparejamiento guardado en el
       // historial del navegador de antes de este cambio.
@@ -1720,15 +1758,19 @@
       const keysB = match.keysB || (match.keyB ? [match.keyB] : []);
       if (!keysA.length || !keysB.length) return;
 
-      const idxsA = keysA.map(k => result.onlyA.findIndex(r => recKey(r) === k)).filter(i => i !== -1);
-      const idxsB = keysB.map(k => result.onlyB.findIndex(r => recKey(r) === k)).filter(i => i !== -1);
-      if (!idxsA.length || !idxsB.length) return; // ninguno de los dos lados está visible con el filtro actual
+      // Los documentos pueden estar en "Solo lado A/B" o en un cruce con
+      // diferencia (por eso se busca en ambos sitios).
+      const visA = keysA.filter(k => hasRecordForManual(result,'A',k));
+      const visB = keysB.filter(k => hasRecordForManual(result,'B',k));
+      if (!visA.length || !visB.length) return; // ninguno de los dos lados está visible con el filtro actual
 
-      const recsA = idxsA.map(i => result.onlyA[i]);
-      const recsB = idxsB.map(i => result.onlyB[i]);
-      // Quitar de mayor a menor índice para no desordenar el array mientras se hace splice.
-      idxsA.slice().sort((x,y)=>y-x).forEach(i => result.onlyA.splice(i,1));
-      idxsB.slice().sort((x,y)=>y-x).forEach(i => result.onlyB.splice(i,1));
+      const recsA = visA.map(k => takeRecordForManual(result,'A',k)).filter(Boolean);
+      const recsB = visB.map(k => takeRecordForManual(result,'B',k)).filter(Boolean);
+      if (!recsA.length || !recsB.length){
+        // Seguridad: devolver lo que se haya tomado para no perder documentos.
+        recsA.forEach(r => result.onlyA.push(r)); recsB.forEach(r => result.onlyB.push(r));
+        return;
+      }
 
       const a = mergeManualGroup(recsA);
       const b = mergeManualGroup(recsB);
@@ -1903,19 +1945,22 @@
   }
 
   // ---- Emparejamiento manual y justificación de pendientes ----
-  // El usuario selecciona 1 o 2 filas en "Solo lado A" y 1 o 2 en "Solo lado
-  // B" (los botones "Emparejar" de cada tabla); la barra flotante muestra la
+  // El usuario selecciona cuantas filas necesite en "Solo lado A" y en "Solo lado
+  // B" (los botones "Emparejar" de cada tabla), y también puede sumar cruces
+  // que están en "Diferencias" (su botón agrega ambos documentos del cruce, ya
+  // que a veces otros documentos son su complemento); la barra flotante muestra la
   // selección, la suma de cada lado y la diferencia entre ambas sumas antes
   // de confirmar. Sirve para casos como una factura que en un sistema quedó
   // partida en dos documentos y en el otro en uno solo. "Justificar" saca un
   // pendiente del conteo sin necesidad de emparejarlo con nada (ej. una nota
   // crédito interna).
-  const MANUAL_MATCH_MAX_PER_SIDE = 2;
 
   function manualSelectedRecords(side){
     const r = currentResults();
     if (!r) return [];
-    const list = side === 'A' ? r.onlyA : r.onlyB;
+    // Los seleccionados pueden venir de "Solo lado" o de un cruce con diferencia.
+    const list = (side === 'A' ? r.onlyA : r.onlyB).slice();
+    r.diff.forEach(d => partsOf(side === 'A' ? d.a : d.b).forEach(p => list.push(p)));
     return state.manualSelect[side].map(k => findRecordByKey(list, k)).filter(Boolean);
   }
 
@@ -1928,7 +1973,8 @@
 
     const sideHtml = (recs, emptyLabel) => {
       if (!recs.length) return emptyLabel;
-      const lines = recs.map(rec => '<div>'+rec.doc+' · '+fmtMoney(rec.valor)+'</div>').join('');
+      const lines = recs.map(rec => '<div class="mm-line"><span>'+rec.doc+' · '+fmtMoney(rec.valor)+'</span>'
+        +'<button class="mm-remove" type="button" data-side="'+(recs===selA?'A':'B')+'" data-key="'+escAttr(encodeURIComponent(recKey(rec)))+'" title="Quitar de la selección" aria-label="Quitar de la selección">✕</button></div>').join('');
       const subtotal = recs.length > 1 ? '<div class="mm-subtotal">Suma: '+fmtMoney(sum(recs, x=>x.valor))+'</div>' : '';
       return lines + subtotal;
     };
@@ -1942,15 +1988,20 @@
     }
 
     bar.innerHTML =
-      '<div class="mm-side">'+sideHtml(selA, 'Selecciona hasta 2 filas en «Solo lado A»')+'</div>'
+      '<div class="mm-side">'+sideHtml(selA, 'Selecciona filas en «Solo lado A» o en «Diferencias»')+'</div>'
       + '<div class="mm-x"><div>×</div>'+deltaHtml+'</div>'
-      + '<div class="mm-side">'+sideHtml(selB, 'Selecciona hasta 2 filas en «Solo lado B»')+'</div>'
+      + '<div class="mm-side">'+sideHtml(selB, 'Selecciona filas en «Solo lado B» o en «Diferencias»')+'</div>'
       + '<div class="mm-actions">'
         + '<button class="mini-btn primary-mini" type="button" id="mm-confirm"'+((selA.length&&selB.length)?'':' disabled')+'>Confirmar emparejamiento</button>'
         + '<button class="mini-btn" type="button" id="mm-cancel">Cancelar</button>'
       + '</div>';
     const confirmBtn = document.getElementById('mm-confirm');
     if (confirmBtn) confirmBtn.addEventListener('click', confirmManualMatch);
+    bar.querySelectorAll('.mm-remove').forEach(btn => btn.addEventListener('click', () => {
+      const side = btn.dataset.side, key = decodeURIComponent(btn.dataset.key);
+      state.manualSelect[side] = state.manualSelect[side].filter(k => k !== key);
+      renderTable(state.activeTab);
+    }));
     document.getElementById('mm-cancel').addEventListener('click', () => {
       state.manualSelect = { A: [], B: [] };
       renderTable(state.activeTab);
@@ -1960,7 +2011,16 @@
   function confirmManualMatch(){
     if (!state.manualSelect.A.length || !state.manualSelect.B.length) return;
     const concNum = state.activeConc;
-    state.manual[concNum].matches.push({ keysA: state.manualSelect.A.slice(), keysB: state.manualSelect.B.slice() });
+    const selKeysA = state.manualSelect.A.slice(), selKeysB = state.manualSelect.B.slice();
+    const setA = new Set(selKeysA), setB = new Set(selKeysB);
+    // Si la selección reabre un emparejamiento manual anterior (que quedó con
+    // diferencia) se reemplaza por el nuevo, que lo incluye completo.
+    state.manual[concNum].matches = state.manual[concNum].matches.filter(mt => {
+      const kA = mt.keysA || (mt.keyA ? [mt.keyA] : []);
+      const kB = mt.keysB || (mt.keyB ? [mt.keyB] : []);
+      return !(kA.some(k => setA.has(k)) || kB.some(k => setB.has(k)));
+    });
+    state.manual[concNum].matches.push({ keysA: selKeysA, keysB: selKeysB });
     state.manualSelect = { A: [], B: [] };
     runReconcile();
     renderResults(false);
@@ -1972,13 +2032,36 @@
     const current = state.manualSelect[side];
     if (current.includes(key)) {
       state.manualSelect[side] = current.filter(k => k !== key);
-    } else if (current.length >= MANUAL_MATCH_MAX_PER_SIDE) {
-      showError('Ya seleccionaste el máximo de '+MANUAL_MATCH_MAX_PER_SIDE+' documentos de este lado. Deselecciona uno primero (o confirma el emparejamiento actual) para elegir otro.');
-      return;
     } else {
       current.push(key);
     }
     renderTable(state.activeTab);
+  }
+
+  // Agrega (o quita) a la selección los documentos de un cruce con diferencia:
+  // todos los del lado A van a la selección A y todos los del lado B a la B.
+  function handleMatchDiffClick(btn){
+    const keysA = JSON.parse(decodeURIComponent(btn.dataset.keysa));
+    const keysB = JSON.parse(decodeURIComponent(btn.dataset.keysb));
+    const allIn = keysA.every(k => state.manualSelect.A.includes(k)) && keysB.every(k => state.manualSelect.B.includes(k));
+    if (allIn){
+      state.manualSelect.A = state.manualSelect.A.filter(k => !keysA.includes(k));
+      state.manualSelect.B = state.manualSelect.B.filter(k => !keysB.includes(k));
+    } else {
+      keysA.forEach(k => { if (!state.manualSelect.A.includes(k)) state.manualSelect.A.push(k); });
+      keysB.forEach(k => { if (!state.manualSelect.B.includes(k)) state.manualSelect.B.push(k); });
+    }
+    renderTable(state.activeTab);
+  }
+
+  // Botón "Emparejar" de una fila de Diferencias / Comparativa.
+  function diffMatchBtnHtml(a, b){
+    const keysA = partsOf(a).map(recKey), keysB = partsOf(b).map(recKey);
+    const isSel = keysA.every(k => state.manualSelect.A.includes(k)) && keysB.every(k => state.manualSelect.B.includes(k));
+    return '<button class="mini-btn match-diff-btn'+(isSel?' selected-mini':'')+'" type="button" data-keysa="'+escAttr(encodeURIComponent(JSON.stringify(keysA)))+'" data-keysb="'+escAttr(encodeURIComponent(JSON.stringify(keysB)))+'" title="Agregar este cruce a la selección para sumarle documentos complementarios">'+(isSel?'✓ Seleccionado':'Emparejar')+'</button>';
+  }
+  function diffRowIsSelected(a, b){
+    return partsOf(a).every(p => state.manualSelect.A.includes(recKey(p))) && partsOf(b).every(p => state.manualSelect.B.includes(recKey(p)));
   }
 
   async function handleDiscardClick(btn){
@@ -2059,6 +2142,8 @@
   document.getElementById('table-wrap').addEventListener('click', (e) => {
     const copyBtn = e.target.closest('.copy-btn');
     if (copyBtn){ handleCopyClick(copyBtn); return; }
+    const matchDiffBtn = e.target.closest('.match-diff-btn');
+    if (matchDiffBtn){ handleMatchDiffClick(matchDiffBtn); return; }
     const matchBtn = e.target.closest('.match-btn');
     if (matchBtn){ handleMatchClick(matchBtn); return; }
     const discardBtn = e.target.closest('.discard-btn');
@@ -2175,13 +2260,13 @@
         const noteHtml = note
           ? '<div class="manual-note">📝 '+escAttr(note)+' <button class="note-edit-btn" type="button" data-key="'+noteKey+'" title="Editar nota">✎</button></div>'
           : '<button class="mini-btn note-btn" type="button" data-key="'+noteKey+'">+ Nota</button>';
-        rows += '<tr>'
+        rows += '<tr class="'+(diffRowIsSelected(a,b)?'row-selected':'')+'">'
           +'<td>'+docPairHtml(a,b)+'</td>'
           +'<td>'+fmtDate(a.fecha)+' / '+fmtDate(b.fecha)+'</td>'
           +'<td class="num">'+fmtMoney(a.valor)+' / '+fmtMoney(b.valor)+'</td>'
           +'<td>'+descPairHtml(a,b)+'</td>'
           +'<td>'+sucBadge(a)+'</td>'
-          +'<td class="diff-cell'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'<div class="diff-note">'+reasons.join(', ')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>'+noteHtml+'</td>'
+          +'<td class="diff-cell'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'<div class="diff-note">'+reasons.join(', ')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>'+noteHtml+'<div style="margin-top:6px">'+diffMatchBtnHtml(a,b)+'</div></td>'
           +'</tr>';
       });
     } else if (tab === 'comparativa'){
@@ -2204,13 +2289,14 @@
       list.forEach(({a,b,notes,reasons,note,kind}) => {
         const dv = a.valor - b.valor;
         const noteKey = escAttr(encodeURIComponent(recKey(a)));
+        const matchHtml = kind !== 'diff' ? '' : '<div style="margin-top:6px">'+diffMatchBtnHtml(a,b)+'</div>';
         const noteHtml = kind !== 'diff' ? '' : (note
           ? '<div class="manual-note">📝 '+escAttr(note)+' <button class="note-edit-btn" type="button" data-key="'+noteKey+'" title="Editar nota">✎</button></div>'
           : '<button class="mini-btn note-btn" type="button" data-key="'+noteKey+'">+ Nota</button>');
         const estado = kind === 'ok'
           ? pillFor('ok')+(notes&&notes.length? '<div class="diff-note" style="color:#9AA5B1">'+notes.join(', ')+'</div>':'')
-          : pillFor('diff')+'<div class="diff-note">'+(reasons?reasons.join(', '):'')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>'+noteHtml;
-        rows += '<tr>'
+          : pillFor('diff')+'<div class="diff-note">'+(reasons?reasons.join(', '):'')+(notes&&notes.length? '<br><span style="color:#9AA5B1;font-weight:400">'+notes.join(', ')+'</span>':'')+'</div>'+noteHtml+matchHtml;
+        rows += '<tr class="'+(kind==='diff'&&diffRowIsSelected(a,b)?'row-selected':'')+'">'
           +'<td class="mono cmp-a">'+a.doc+docCopyBtn(a.doc)+'</td><td>'+fmtDate(a.fecha)+'</td><td>'+(a.desc||'—')+'</td><td class="num">'+fmtMoney(a.valor)+'</td>'
           +'<td class="diff-cell cmp-diff'+(dv<0?' neg':'')+'">'+fmtMoney(dv)+'</td>'
           +'<td class="mono cmp-b">'+b.doc+docCopyBtn(b.doc)+'</td><td>'+fmtDate(b.fecha)+'</td><td>'+(b.desc||'—')+'</td><td class="num">'+fmtMoney(b.valor)+'</td>'
